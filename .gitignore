@@ -51,3 +51,12 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# CSVs
+*.csv
+
+# xlsx
+*.xlsx
+
+*.jpg
+*.rds

@@ -38,11 +38,27 @@ unavail_init <- read.xlsx(boxi_extract, sheet = "Unavailability",
 
 offers_init <- read.xlsx(boxi_extract, sheet = "Appointments & Offers",
                          sep.names = "_",
-                         detectDates = TRUE) |> 
+                         detectDates = TRUE)
+
+offers_names <- names(offers_init)
+
+offers_init <- offers_init |> 
   select(-Patient_Type_Cohort_Description) |> 
   rename(CHI = Pat_CHI_Number,
          MUI = Mandatory_Unique_Identifier)
 
+offers_init_2 <- read.xlsx(boxi_extract, sheet = "Appointments & Offers(1)",
+                          colNames = FALSE,
+                          detectDates = TRUE)
+
+names(offers_init_2) <- offers_names
+
+offers_init_2 <- offers_init_2 |> 
+  select(-Patient_Type_Cohort_Description) |> 
+  rename(CHI = Pat_CHI_Number,
+         MUI = Mandatory_Unique_Identifier)
+
+offers_init <- bind_rows(offers_init, offers_init_2)
 
 #### Step 2 : trim off post target data ----
 # If running multiple times run from here to save you reading in the files
@@ -139,23 +155,43 @@ last_declined_pairs <- waits |>
   ) |> 
   select(MUI, CHI, last_rejection)
 
+last_declined_pairs2 <- waits |>
+  left_join(offers, by = c("MUI", "CHI")) |> 
+  mutate(
+    rejected_reasonable = if_else(
+      (`Appt/Adm_Date` - Offer_Date >= 7) & 
+        str_detect(Offer_Outcome_Description, "Declined"),
+      "rejected reasonable", NA)) |> 
+  arrange(MUI, CHI, desc(Offer_Order)) |> 
+  group_by(MUI, CHI) |> 
+  mutate(
+    declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
+                              lag(rejected_reasonable) == "rejected reasonable", 1, 0)
+  ) |> 
+  ungroup() |> 
+  filter(declined_pair == 1) |> 
+  group_by(MUI, CHI) |> 
+  summarise(
+    last_rejection = max(Response_Rcvd_Date)
+  ) |> 
+  select(MUI, CHI, last_rejection)
+
+check <- anti_join(last_declined_pairs, last_declined_pairs2)
+
+# In cases with a declined pair and a cna/dna take the latest
+
+clock_resets <- last_declined_pairs |> 
+  full_join(last_non_attendances, by = c("MUI", "CHI")) |> 
+  pivot_longer(last_rejection:last_non_attendance) |> 
+  group_by(MUI, CHI) |> 
+  summarise(value = max(value, na.rm = TRUE)) |> 
+  ungroup() |> 
+  rename(last_reset = value)
 
 # Join these clock reset dates onto the waits file
 
 waits <- waits |> 
-  left_join(last_non_attendances, by = c("MUI", "CHI")) |> 
-  left_join(last_declined_pairs, by = c("MUI", "CHI"))
-
-
-# In cases with a CNA/DNA and a declined pair. Take the latest of the two
-# (This block is slow because of rowwise operations. Could be more efficient)
-
-waits <- waits |> 
-  rowwise() |> 
-  mutate(last_reset = max(last_non_attendance,
-                          last_rejection,
-                          na.rm = TRUE)) |> 
-  ungroup()
+  left_join(clock_resets, by = c("MUI", "CHI"))
 
 
 #### Step 6 : find relevant unavailability periods ----
@@ -171,13 +207,14 @@ waits <- waits |>
 unavail <- waits |> 
   left_join(unavail, by = c("MUI", "CHI")) |> 
   mutate(Unavail_End_Date = if_else(Unavail_End_Date < last_reset,
-                                    NA, Unavail_End_Date),
+                                    NA, Unavail_End_Date,
+                                    missing = Unavail_End_Date),
          Unavail_Start_Date = case_when(
            is.na(Unavail_End_Date) ~ NA,
            Unavail_Start_Date < last_reset ~ last_reset,
            TRUE ~ Unavail_Start_Date
          )) |> 
-  mutate(Number_Days_Unavailable = Unavail_End_Date - Unavail_Start_Date) |> 
+  mutate(Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)) |> 
   group_by(MUI, CHI) |> 
   summarise(
     total_unavailability = sum(Number_Days_Unavailable, na.rm = TRUE)
@@ -203,9 +240,9 @@ unavail <- waits |>
 #     ) |> 
 #     ungroup()
 ###
-  
+
 # Join onto waits table
-  
+
 waits <- waits |> 
   left_join(unavail, by = c("MUI", "CHI"))
 
@@ -220,8 +257,8 @@ waits_final <- waits |>
   mutate(new_effective_start_date = if_else(is.na(last_reset),
                                             Init_Start_Date,
                                             last_reset)) |> 
-  mutate(new_wait_length = target_date-new_effective_start_date-total_unavailability,
-         old_wait_length = target_date-Effective_Start_Date) |> 
+  mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |> 
+  rename(old_wait_length = Number_of_waiting_list_days) |> 
   mutate(new_wait_length = as.numeric(new_wait_length)/7,
          old_wait_length = as.numeric(old_wait_length)/7)
 
