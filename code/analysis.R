@@ -8,6 +8,11 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
+
+waits_with_groups <- waits |> 
+  left_join(ipdc_groupings, by = "Specialty")
+
 #### Step 1 : top line figures ----
 
 # number of waits which have changed length
@@ -59,8 +64,12 @@ board_medians <- waits |>
             over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old) |> 
   ungroup()
 
+top_10 <- waits |> 
+  group_by(grouped_speci)
+
 spec_medians <- waits |> 
-  group_by(Specialty) |> 
+  filter() |> 
+  group_by(grouped_specialty) |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
             `90th new` = quantile(new_wait_length, 0.9)*7,
