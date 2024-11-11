@@ -14,4 +14,4 @@
 
 mui_audit <- "MUIs/audit_sample/extracts/"
 
-boxi_extract <- "MUIs/Ongoing_unavailability_offers_all.xlsx"
+boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
