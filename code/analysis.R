@@ -10,54 +10,49 @@
 
 #### Step 0 : Housekeeping ----
 
-
 #
-median_wait <- waits_final |> 
+median_wait <- waits |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
             `90th new` = quantile(new_wait_length, 0.9)*7,
-            `90th old` = quantile(old_wait_length, 0.9)*7)
+            `90th old` = quantile(old_wait_length, 0.9)*7,
+            over_52_new = sum(new_wait_length>52),
+            over_52_old = sum(old_wait_length>52),
+            med_diff_p = 100*(median_new-median_old)/median_old,
+            `90th_diff_p` = 100*(`90th new`-`90th old`)/`90th old`,
+            over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old)
 
-board_medians <- waits_final |> 
+board_medians <- waits |> 
   group_by(NHS_Board_of_Treatment) |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
             `90th new` = quantile(new_wait_length, 0.9)*7,
             `90th old` = quantile(old_wait_length, 0.9)*7,
+            over_52_new = sum(new_wait_length>52),
+            over_52_old = sum(old_wait_length>52),
             med_diff_p = 100*(median_new-median_old)/median_old,
-            `90th_diff_p` = 100*(`90th new`-`90th old`)/`90th old`) |> 
+            `90th_diff_p` = 100*(`90th new`-`90th old`)/`90th old`,
+            over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old) |> 
   ungroup()
 
-spec_medians <- waits_final |> 
+spec_medians <- waits |> 
   group_by(Specialty) |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
             `90th new` = quantile(new_wait_length, 0.9)*7,
-            `90th old` = quantile(old_wait_length, 0.9)*7) |> 
+            `90th old` = quantile(old_wait_length, 0.9)*7,
+            over_52_new = sum(new_wait_length>52),
+            over_52_old = sum(old_wait_length>52),
+            med_diff_p = 100*(median_new-median_old)/median_old,
+            `90th_diff_p` = 100*(`90th new`-`90th old`)/`90th old`,
+            over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old) |> 
   ungroup()
 
-pub_path <- paste0("/PHI_conf/WaitingTimes/SoT/Publications/Inpatient, Day case and Outpatient Stage of Treatment Waiting Times/20240827/Output/R Output/PerformanceIPDC.csv")
-
-pub_medians <- read_csv(pub_path) |> 
-  mutate(Date = dmy(Date)) |> 
-  filter(`Ongoing/Completed` == "Ongoing",
-         `NHS Board of Treatment` != "NHS Scotland (Excluding NHS Tayside)",
-         Date == dmy("30/06/2024")) |> 
-  select(`NHS Board of Treatment`, Specialty, Median, `90th Percentile`) |> 
-  rename(NHS_Board_of_Treatment = `NHS Board of Treatment`)
-
-new_pub_comp <- waits_final |> 
-  left_join(pub_medians, by = c("NHS_Board_of_Treatment", "Specialty")) |> 
-  group_by(NHS_Board_of_Treatment) |> 
-  summarise(median_new = median(new_wait_length)*7,
-            median_old = median(old_wait_length)*7,
-            `90th new` = quantile(new_wait_length, 0.9)*7,
-            `90th old` = quantile(old_wait_length, 0.9)*7) |> 
-  ungroup()
 
 # create bands based on planned care targets to look at records which
 # have changed
-waits_final_2 <- waits_final |> 
+
+waits_final_2 <- waits |> 
   mutate(
     bin_new = case_when(
       new_wait_length < 52 ~ "0-52",
@@ -79,23 +74,22 @@ waits_final_2 <- waits_final |>
   count(bin_old, bin_new)
 
 # number of waits which have changed length
-changed_waits <- waits_final |> 
+changed_waits <- waits |> 
   filter(old_wait_length != new_wait_length) |> 
   nrow()
 
 # Percentage of waits which have changed
-changed_waits_p <- 100*changed_waits/(nrow(waits_final))
+changed_waits_p <- 100*changed_waits/(nrow(waits))
 
 # Mean change for an adjusted wait that has changed
-mean_difference <- waits_final |> 
+mean_difference <- waits |> 
   filter(old_wait_length != new_wait_length) |> 
   summarise(mean_diff = mean(new_wait_length-old_wait_length))
 
 
-#### Step 9 : Graphs ----
+#### Step x : Graphs ----
 
-
-dow_hist <- waits_final |> 
+dow_hist <- waits |> 
   pivot_longer(cols = c(new_wait_length, old_wait_length)) |>
   ggplot(aes(x=value, fill=name)) + 
   geom_histogram(breaks = seq(0, 200, by = 13),
@@ -107,13 +101,13 @@ dow_hist <- waits_final |>
   theme_phs()
 
 
-#### Step 10 : optional exports ----
+#### Step x : optional exports ----
 
 ggsave(
-  "output/DoW_chart.jpg",
+  paste0("output/", run_name, "_DoW_chart.jpg"),
   scale = 3,
   plot = dow_hist)
 
-write_csv(waits_final_2, "output/band_changes.csv")
+write_csv(waits_final_2, paste0("output/", run_name, "_band_changes.csv"))
 
-write_csv(board_medians, "output/board_medians.csv")
+write_csv(board_medians, paste0("output/", run_name, "_board_medians.csv"))

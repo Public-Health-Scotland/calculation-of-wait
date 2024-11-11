@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# calculate_waits_short_notice_change.R
+# calculate_waits_all_old_rules.R
 # Angus Morton
 # 2024-11-11
 # 
-# Calculate waits applying the 7-10 day change for the short notice period
+# Calculate waits based on all old rules
 # 
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,7 +30,7 @@ declined_pairs <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
-      (`Appt/Adm_Date` - Offer_Date >= 10) & 
+      (`Appt/Adm_Date` - Offer_Date >= 7) & 
         str_detect(Offer_Outcome_Description, "Declined"),
       "rejected reasonable", NA)) |> 
   arrange(MUI, CHI, desc(Offer_Order)) |> 

@@ -8,6 +8,18 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lubridate)
+
+waits <- waits_init
+offers <- offers_init
+unavail <- unavail_init
+
+#### Step 1 : Clock resets ----
+
 last_non_attendances <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   filter(Non_Attendance_Category_Description %in% c("Could Not Attend",
@@ -18,10 +30,6 @@ last_non_attendances <- waits |>
   ) |> 
   ungroup() |> 
   select(MUI, CHI, last_non_attendance)
-
-
-# Create a list of waits with the date of their latest declined pair
-# left join on waits to only get offers relevant to the cohort
 
 last_declined_pairs <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
@@ -57,8 +65,9 @@ waits <- waits |>
   left_join(clock_resets, by = c("MUI", "CHI"))
 
 
+#### Step 2 : unavailability ----
 
-unavail_old <- waits |>
+unavail <- waits |>
   left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(Unavail_End_Date = if_else(Unavail_End_Date < Effective_Start_Date,
                                     NA, Unavail_End_Date,
@@ -89,13 +98,14 @@ unavail_old <- waits |>
   ) |>
   ungroup()
 
-waits_save <- waits
-
-waits_old <- waits |>
-  left_join(unavail_old, by = c("MUI", "CHI")) |>
+waits <- waits |>
+  left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
-waits_final_check <- waits_old |>
+
+#### Step 3 : Final wait calculation ----
+
+waits <- waits |>
   mutate(
     Effective_Start_Date = ymd(Effective_Start_Date),
     last_reset = ymd(last_reset)) |>
@@ -105,6 +115,8 @@ waits_final_check <- waits_old |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days)
+  rename(old_wait_length = Number_of_waiting_list_days) |> 
+  mutate(old_wait_length = old_wait_length/7,
+         new_wait_length = new_wait_length/7)
 
 
