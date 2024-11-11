@@ -8,10 +8,14 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+rule <- "all"
+
+patient_type <- "IPDC"
+
 #### filepaths ----
 
-# MUI audit report
-
-mui_audit <- "MUIs/audit_sample/extracts/"
-
+# in 
 boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
+
+# out
+run_name <- "all_rules"

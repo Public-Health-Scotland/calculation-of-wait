@@ -64,15 +64,13 @@ target_date <- waits_init |>
   distinct(Date) |> 
   dmy()
 
-waits <- waits_init
-
-unavail <- unavail_init |> 
+unavail_init <- unavail_init |> 
   filter(Unavail_Start_Date <= target_date) |> 
   mutate(Unavail_End_Date = if_else(Unavail_End_Date > target_date,
                                     target_date, Unavail_End_Date)) |>
   mutate(Number_Days_Unavailable = Unavail_End_Date - Unavail_Start_Date)
 
-offers <- offers_init |> 
+offers_init <- offers_init |> 
   filter(Offer_Date <= target_date) |> 
   mutate(
     Non_Attendance_Category_Description = if_else(Non_Attendance_Date > target_date,
@@ -95,3 +93,13 @@ offers <- offers_init |>
     
     Offer_Date = if_else(Offer_Date > target_date,
                          NA, Offer_Date))
+
+if (patient_type == "IPDC") {
+  waits_init <- waits_init |> 
+    filter(Patient_Type == "Inpatient/Day case")
+}
+
+if (patient_type == "NOP") {
+  waits_init <- waits_init |> 
+    filter(Patient_Type == "New Outpatient")
+}

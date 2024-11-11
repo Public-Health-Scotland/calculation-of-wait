@@ -8,9 +8,33 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#### Step 0 : Housekeeping ----
+#### Step 1 : top line figures ----
 
-#
+# number of waits which have changed length
+changed_waits <- waits |> 
+  filter(old_wait_length != new_wait_length) |> 
+  nrow()
+
+# Percentage of waits which have changed
+changed_waits_p <- 100*changed_waits/(nrow(waits))
+
+# Mean change for an adjusted wait that has changed
+mean_difference <- waits |> 
+  filter(old_wait_length != new_wait_length) |> 
+  summarise(mean_diff = mean(new_wait_length-old_wait_length))
+
+
+top_line <- data.frame(
+  measure = c("Number of waits which have changed length",
+              "Percentage of waits which have changed length",
+              "Mean change for an adjusted wait that has changed"),
+  value = c(changed_waits,
+            changed_waits_p,
+            mean_difference)
+)
+
+#### Step 2 : Tables ----
+
 median_wait <- waits |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
@@ -73,21 +97,8 @@ waits_final_2 <- waits |>
   filter(bin_new != bin_old) |> 
   count(bin_old, bin_new)
 
-# number of waits which have changed length
-changed_waits <- waits |> 
-  filter(old_wait_length != new_wait_length) |> 
-  nrow()
 
-# Percentage of waits which have changed
-changed_waits_p <- 100*changed_waits/(nrow(waits))
-
-# Mean change for an adjusted wait that has changed
-mean_difference <- waits |> 
-  filter(old_wait_length != new_wait_length) |> 
-  summarise(mean_diff = mean(new_wait_length-old_wait_length))
-
-
-#### Step x : Graphs ----
+#### Step 3 : DoW graph ----
 
 dow_hist <- waits |> 
   pivot_longer(cols = c(new_wait_length, old_wait_length)) |>
@@ -100,14 +111,21 @@ dow_hist <- waits |>
   ylab("number waiting") +
   theme_phs()
 
+#### Step 4 : Sankey chart ----
 
-#### Step x : optional exports ----
+
+#### Step 5 : Exports ----
+
+write_csv(top_line, paste0("output/", run_name, "_top_line_figures.csv"))
+
+write_csv(waits_final_2, paste0("output/", run_name, "_band_changes.csv"))
+
+write_csv(board_medians, paste0("output/", run_name, "_board_medians.csv"))
+
+write_csv(spec_medians, paste0("output/", run_name, "_spec_medians.csv"))
 
 ggsave(
   paste0("output/", run_name, "_DoW_chart.jpg"),
   scale = 3,
   plot = dow_hist)
 
-write_csv(waits_final_2, paste0("output/", run_name, "_band_changes.csv"))
-
-write_csv(board_medians, paste0("output/", run_name, "_board_medians.csv"))
