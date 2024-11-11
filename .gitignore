@@ -60,3 +60,6 @@ rsconnect/
 
 *.jpg
 *.rds
+
+# old_output folder
+old_output/
