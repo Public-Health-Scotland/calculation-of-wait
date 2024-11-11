@@ -14,8 +14,7 @@
 source("code/import_data.R")
 
 # calculate waits
-source("code/calculate_waits_all_old_rules.R")
-# source("code/calculate_waits_all_new_rules.R")
+source("code/calculate_waits_all_new_rules.R")
 # source("code/calculate_waits_resets_beyond_12.R")
 # source("code/calculate_waits_unavail_beyond_12.R")
 # source("code/calculate_waites_short_notice_change.R")

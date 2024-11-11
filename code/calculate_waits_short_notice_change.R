@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# calculate_waits_unavail_beyond_12.R
+# calculate_waits_short_notice_change.R
 # Angus Morton
 # 2024-11-11
 # 
-# Calculate waits factoring in unavailability beyond 12 weeks
+# Calculate waits applying the 7-10 day change for the short notice period
 # 
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -26,7 +26,7 @@ declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
-      (`Appt/Adm_Date` - Offer_Date >= 7) & 
+      (`Appt/Adm_Date` - Offer_Date >= 10) & 
         str_detect(Offer_Outcome_Description, "Declined"),
       "rejected reasonable", NA)) |> 
   arrange(MUI, CHI, desc(Offer_Order)) |> 
@@ -47,11 +47,9 @@ all_clock_resets <- bind_rows(declined_pairs2, non_attendances) |>
   rename(reset_date = value) |> 
   filter(!is.na(reset_date))
 
-# Join these clock reset dates onto the waits file
 
 waits_all_resets <- waits |> 
   left_join(all_clock_resets, by = c("MUI", "CHI"))
-
 
 
 resets_within_12 <- waits_all_resets |> 
@@ -103,8 +101,9 @@ waits_with_resets <- waits |>
   mutate(last_reset = if_else(is.na(reset_date), Init_Start_Date,
                               reset_date))
 
-unavail_new <- waits |> 
-  left_join(unavail, by = c("MUI", "CHI")) |> 
+
+unavail_old <- waits_with_resets |>
+  left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(Unavail_End_Date = if_else(Unavail_End_Date < last_reset,
                                     NA, Unavail_End_Date,
                                     missing = Unavail_End_Date),
@@ -112,16 +111,31 @@ unavail_new <- waits |>
            is.na(Unavail_End_Date) ~ NA,
            Unavail_Start_Date < last_reset ~ last_reset,
            TRUE ~ Unavail_Start_Date
-         )) |> 
-  mutate(Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1) |> 
-  group_by(MUI, CHI) |> 
+         )) |>
+  mutate(Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1,
+         esd_lapse = as.numeric(Unavail_Start_Date - last_reset)) |>
+  group_by(MUI, CHI) |>
+  arrange(Unavail_Start_Date) |>
+  mutate(
+    n_periods = n(),
+    unavail_order = row_number()
+  ) |>
+  mutate(unavail_sum = lag(cumsum(Number_Days_Unavailable),
+                           default = 0),
+         wl_days_at_start = esd_lapse - unavail_sum,
+         discarded = if_else(wl_days_at_start > 84, 1, 0)) |>
+  mutate(counting = if_else(cumsum(discarded)==0,1,0)) |>
+  ungroup() |>
+  filter(counting == 1) |>
+  group_by(MUI, CHI) |>
   summarise(
     total_unavailability = sum(Number_Days_Unavailable, na.rm = TRUE)
-  ) |> 
+  ) |>
   ungroup()
 
-waits_new <- waits |>
-  left_join(unavail_new, by = c("MUI", "CHI")) |>
+
+waits_old <- waits_with_resets |>
+  left_join(unavail_old, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
 
@@ -136,4 +150,5 @@ waits_final_check <- waits_old |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
+
 
