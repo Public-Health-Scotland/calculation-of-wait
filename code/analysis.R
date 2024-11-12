@@ -8,9 +8,22 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
+library(networkD3)
+library(dplyr)
+library(ggplot2)
+library(phsstyles)
 
-waits_with_groups <- waits |> 
+ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
+nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")
+
+groupings <- ipdc_groupings |> 
+  full_join(nop_groupings, by = "Specialty") |> 
+  mutate(grouped_specialty.x = if_else(is.na(grouped_specialty.x),
+                                       grouped_specialty.y,
+                                       grouped_specialty.x)) |> 
+  select(Specialty, grouped_specialty = grouped_specialty.x)
+
+waits <- waits |> 
   left_join(ipdc_groupings, by = "Specialty")
 
 #### Step 1 : top line figures ----
@@ -65,10 +78,15 @@ board_medians <- waits |>
   ungroup()
 
 top_10 <- waits |> 
-  group_by(grouped_speci)
+  count(grouped_specialty) |> 
+  arrange(desc(n)) |> 
+  head(10) |> 
+  select(grouped_specialty) |> 
+  pull()
+  
 
 spec_medians <- waits |> 
-  filter() |> 
+  filter(grouped_specialty %in% top_10) |> 
   group_by(grouped_specialty) |> 
   summarise(median_new = median(new_wait_length)*7,
             median_old = median(old_wait_length)*7,
@@ -85,7 +103,7 @@ spec_medians <- waits |>
 # create bands based on planned care targets to look at records which
 # have changed
 
-waits_final_2 <- waits |> 
+wait_band_changes <- waits |> 
   mutate(
     bin_new = case_when(
       new_wait_length < 52 ~ "0-52",
@@ -122,12 +140,72 @@ dow_hist <- waits |>
 
 #### Step 4 : Sankey chart ----
 
+sankey_flows <- wait_band_changes |> 
+  mutate(bin_old = paste0(as.character(bin_old), " old"),
+         bin_new = paste0(as.character(bin_new), " new"))
+
+
+# From these flows we need to create a node data frame: it lists every entities involved in the flow
+nodes <- data.frame(
+  name=c(as.character(sankey_flows$bin_old), 
+         as.character(sankey_flows$bin_new)) %>% unique()
+)
+
+# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+sankey_flows$IDsource <- match(sankey_flows$bin_old, nodes$name)-1 
+sankey_flows$IDtarget <- match(sankey_flows$bin_new, nodes$name)-1
+
+# Make the Network
+p <- sankeyNetwork(Links = sankey_flows, Nodes = nodes,
+                   Source = "IDsource", Target = "IDtarget",
+                   Value = "n", NodeID = "name", 
+                   sinksRight=FALSE,
+                   nodePadding = 100,
+                   fontSize = 20,
+                   margin = 100)
+
+javascript_string <-
+  'function(el, x){
+    d3.select(el).selectAll(".node text")
+      .text(d => d.name + " (" + d.value + ")");
+  }'
+
+htmlwidgets::onRender(x = p, jsCode = javascript_string)
+
+p$x$nodes <-
+  p$x$nodes %>% 
+  mutate(is_source_node = name %in% sankey_flows$bin_old)
+
+htmlwidgets::onRender(
+  x = p,
+  jsCode = '
+  function(el,x) {
+  d3.select(el)
+    .selectAll(".node text")
+    .filter(function(d) { return d.is_source_node; })
+    .attr("x", x.options.nodeWidth - 17)
+    .attr("text-anchor", "end");
+  
+  d3.select(el)
+    .selectAll(".node text")
+    .filter(function(d) { return !d.is_source_node; })
+    .attr("x", x.options.nodeWidth + 1)
+    .attr("text-anchor", "start");
+  
+  d3.select(el).selectAll(".node text")
+      .text(d => d.name + " (" + d.value + ")");
+  }
+  '
+)
+
+p
+
 
 #### Step 5 : Exports ----
 
 write_csv(top_line, paste0("output/", run_name, "_top_line_figures.csv"))
 
-write_csv(waits_final_2, paste0("output/", run_name, "_band_changes.csv"))
+write_csv(wait_band_changes, paste0("output/", run_name, "_band_changes.csv"))
 
 write_csv(board_medians, paste0("output/", run_name, "_board_medians.csv"))
 

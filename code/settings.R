@@ -8,9 +8,9 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-rule <- "all"
+rule <- "resets_beyond_12"
 
-patient_type <- "IPDC"
+patient_type <- "All"
 
 #### filepaths ----
 
@@ -18,4 +18,4 @@ patient_type <- "IPDC"
 boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
 
 # out
-run_name <- "all_rules"
+run_name <- "resets_beyond_12_NOP_IPDC"
