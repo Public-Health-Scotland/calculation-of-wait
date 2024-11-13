@@ -51,12 +51,12 @@ all_clock_resets <- bind_rows(declined_pairs, non_attendances) |>
   rename(reset_date = value) |> 
   filter(!is.na(reset_date))
 
-waits <- waits |> 
+waits_all_resets <- waits |> 
   left_join(all_clock_resets, by = c("MUI", "CHI"))
 
 # Find clock resets within 12 factoring in unavailability
 
-resets_within_12 <- waits |> 
+resets_within_12 <- waits_all_resets |> 
   filter(!is.na(reset_date)) |> 
   arrange(reset_date) |> 
   group_by(MUI, CHI) |> 
@@ -126,7 +126,7 @@ unavail <- waits |>
   ungroup()
 
 waits <- waits |>
-  left_join(unavail_new, by = c("MUI", "CHI")) |>
+  left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
 
@@ -142,7 +142,5 @@ waits <- waits |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days) |> 
-  mutate(old_wait_length = old_wait_length/7,
-         new_wait_length = new_wait_length/7)
+  rename(old_wait_length = Number_of_waiting_list_days)
 

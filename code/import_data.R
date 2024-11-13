@@ -94,12 +94,3 @@ offers_init <- offers_init |>
     Offer_Date = if_else(Offer_Date > target_date,
                          NA, Offer_Date))
 
-if (patient_type == "IPDC") {
-  waits_init <- waits_init |> 
-    filter(Patient_Type == "Inpatient/Day case")
-}
-
-if (patient_type == "NOP") {
-  waits_init <- waits_init |> 
-    filter(Patient_Type == "New Outpatient")
-}

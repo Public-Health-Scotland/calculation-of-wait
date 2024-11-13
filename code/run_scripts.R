@@ -17,19 +17,25 @@ source("code/import_data.R")
 
 # calculate waits
 if (rule == "all") {
+  
   source("code/calculate_waits_all_new_rules.R")
-}
-
-if (rule == "resets_beyond_12") {
+  
+} else if (rule == "resets_beyond_12") {
+  
   source("code/calculate_waits_resets_beyond_12.R")
-}
-
-if (rule == "unavailability_beyond_12") {
+  
+} else if (rule == "unavailability_beyond_12") {
+  
   source("code/calculate_waits_unavail_beyond_12.R")
-}
-
-if (rule == "short_notice_change") {
-  source("code/calculate_waites_short_notice_change.R")
+  
+} else if (rule == "short_notice_change") {
+  
+  source("code/calculate_waits_short_notice_change.R")
+  
+} else if (rule == "all_old") {
+  
+  source("code/calculate_waits_all_old_rules.R")
+  
 }
 
 

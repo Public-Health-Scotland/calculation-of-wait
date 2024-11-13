@@ -68,6 +68,9 @@ waits <- waits |>
 #### Step 2 : unavailability ----
 
 unavail <- waits |>
+  mutate(Effective_Start_Date = if_else(is.na(last_reset),
+                                        Init_Start_Date,
+                                        last_reset)) |> 
   left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(Unavail_End_Date = if_else(Unavail_End_Date < Effective_Start_Date,
                                     NA, Unavail_End_Date,
@@ -99,6 +102,9 @@ unavail <- waits |>
   ungroup()
 
 waits <- waits |>
+  mutate(Effective_Start_Date = if_else(is.na(last_reset),
+                                        Init_Start_Date,
+                                        last_reset)) |> 
   left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
@@ -115,8 +121,6 @@ waits <- waits |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days) |> 
-  mutate(old_wait_length = old_wait_length/7,
-         new_wait_length = new_wait_length/7)
+  rename(old_wait_length = Number_of_waiting_list_days)
 
 

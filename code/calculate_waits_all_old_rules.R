@@ -20,13 +20,14 @@ unavail <- unavail_init
 
 #### Step 1 : Clock resets ----
 
+
 non_attendances <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   filter(Non_Attendance_Category_Description %in% c("Could Not Attend",
                                                     "Did Not Attend")) |> 
   select(MUI, CHI, last_non_attendance = Non_Attendance_Date)
 
-declined_pairs <- waits |>
+declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
@@ -45,20 +46,20 @@ declined_pairs <- waits |>
   filter(declined_pair == 1) |> 
   select(MUI, CHI, last_rejection = Response_Rcvd_Date)
 
-all_clock_resets <- bind_rows(declined_pairs, non_attendances) |> 
+all_clock_resets <- bind_rows(declined_pairs2, non_attendances) |> 
   pivot_longer(c("last_rejection", "last_non_attendance")) |> 
   select(-name) |> 
   rename(reset_date = value) |> 
   filter(!is.na(reset_date))
 
+# Join these clock reset dates onto the waits file
 
-waits <- waits |> 
+waits_all_resets <- waits |> 
   left_join(all_clock_resets, by = c("MUI", "CHI"))
 
 
-# Find clock resets within 12 factoring in unavailability
 
-resets_within_12 <- waits |> 
+resets_within_12 <- waits_all_resets |> 
   filter(!is.na(reset_date)) |> 
   arrange(reset_date) |> 
   group_by(MUI, CHI) |> 
@@ -102,15 +103,13 @@ resets_within_12 <- waits |>
     reset_date = max(reset_date)
   )
 
-waits <- waits |> 
+waits_with_resets <- waits |> 
   left_join(resets_within_12, by = c("MUI", "CHI")) |>
   mutate(last_reset = if_else(is.na(reset_date), Init_Start_Date,
                               reset_date))
 
 
-#### Step 2 : Unavailability ----
-
-unavail <- waits_with_resets |>
+unavail_old <- waits_with_resets |>
   left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(Unavail_End_Date = if_else(Unavail_End_Date < last_reset,
                                     NA, Unavail_End_Date,
@@ -142,14 +141,11 @@ unavail <- waits_with_resets |>
   ungroup()
 
 
-waits <- waits |>
-  left_join(unavail, by = c("MUI", "CHI")) |>
+waits_old <- waits_with_resets |>
+  left_join(unavail_old, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
-
-#### Step 3 : Final wait calculation ----
-
-waits <- waits |>
+waits_final_check <- waits_old |>
   mutate(
     Effective_Start_Date = ymd(Effective_Start_Date),
     last_reset = ymd(last_reset)) |>
@@ -159,8 +155,11 @@ waits <- waits |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days) |> 
-  mutate(old_wait_length = old_wait_length/7,
-         new_wait_length = new_wait_length/7)
+  rename(old_wait_length = Number_of_waiting_list_days)
 
 
+non_matching_chis <- waits_final_check |> 
+  filter(old_wait_length != new_wait_length) |> 
+  select(MUI, CHI)
+
+write_csv(non_matching_chis, "temp/non_matching_chis.csv")

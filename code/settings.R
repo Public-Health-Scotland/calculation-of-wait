@@ -8,9 +8,7 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-rule <- "resets_beyond_12"
-
-patient_type <- "All"
+rule <- "short_notice_change"
 
 #### filepaths ----
 
@@ -18,4 +16,4 @@ patient_type <- "All"
 boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
 
 # out
-run_name <- "resets_beyond_12_NOP_IPDC"
+run_name <- "short_notice_change"

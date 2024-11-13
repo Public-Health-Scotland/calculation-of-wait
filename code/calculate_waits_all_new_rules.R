@@ -100,8 +100,6 @@ waits <- waits |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days) |> 
-  mutate(old_wait_length = old_wait_length/7,
-         new_wait_length = new_wait_length/7)
+  rename(old_wait_length = Number_of_waiting_list_days)
 
 
