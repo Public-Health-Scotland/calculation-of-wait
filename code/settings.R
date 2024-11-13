@@ -8,7 +8,7 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-rule <- "short_notice_change"
+rule <- "all"
 
 #### filepaths ----
 
@@ -16,4 +16,4 @@ rule <- "short_notice_change"
 boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
 
 # out
-run_name <- "short_notice_change"
+run_name <- "all"
