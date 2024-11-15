@@ -73,7 +73,7 @@ perform_analysis <- function(ptype) {
   
   #### Step 2 : Tables ----
   
-  median_wait <- data |> 
+  scotland_medians <- data |> 
     summarise(median_new = median(new_wait_length),
               median_old = median(old_wait_length),
               `90th new` = quantile(new_wait_length, 0.9),
@@ -160,69 +160,6 @@ perform_analysis <- function(ptype) {
     ylab("number waiting") +
     theme_phs()
   
-  # #### Step 4 : Sankey chart ----
-  # 
-  # sankey_flows <- wait_band_changes |> 
-  #   mutate(bin_old = paste0(as.character(bin_old), " old"),
-  #          bin_new = paste0(as.character(bin_new), " new"))
-  # 
-  # 
-  # # From these flows we need to create a node data frame: it lists every entities involved in the flow
-  # nodes <- data.frame(
-  #   name=c(as.character(sankey_flows$bin_old), 
-  #          as.character(sankey_flows$bin_new)) %>% unique()
-  # )
-  # 
-  # # With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-  # sankey_flows$IDsource <- match(sankey_flows$bin_old, nodes$name)-1 
-  # sankey_flows$IDtarget <- match(sankey_flows$bin_new, nodes$name)-1
-  # 
-  # # Make the Network
-  # p <- sankeyNetwork(Links = sankey_flows, Nodes = nodes,
-  #                    Source = "IDsource", Target = "IDtarget",
-  #                    Value = "n", NodeID = "name", 
-  #                    sinksRight=FALSE,
-  #                    nodePadding = 100,
-  #                    fontSize = 20,
-  #                    margin = 100)
-  # 
-  # javascript_string <-
-  #   'function(el, x){
-  #     d3.select(el).selectAll(".node text")
-  #       .text(d => d.name + " (" + d.value + ")");
-  #   }'
-  # 
-  # htmlwidgets::onRender(x = p, jsCode = javascript_string)
-  # 
-  # p$x$nodes <-
-  #   p$x$nodes %>% 
-  #   mutate(is_source_node = name %in% sankey_flows$bin_old)
-  # 
-  # htmlwidgets::onRender(
-  #   x = p,
-  #   jsCode = '
-  #   function(el,x) {
-  #   d3.select(el)
-  #     .selectAll(".node text")
-  #     .filter(function(d) { return d.is_source_node; })
-  #     .attr("x", x.options.nodeWidth - 17)
-  #     .attr("text-anchor", "end");
-  #   
-  #   d3.select(el)
-  #     .selectAll(".node text")
-  #     .filter(function(d) { return !d.is_source_node; })
-  #     .attr("x", x.options.nodeWidth + 1)
-  #     .attr("text-anchor", "start");
-  #   
-  #   d3.select(el).selectAll(".node text")
-  #       .text(d => d.name + " (" + d.value + ")");
-  #   }
-  #   '
-  # )
-  # 
-  # p
-  # 
-  
   #### Step 5 : Exports ----
   
   write_csv(top_line, paste0("output/", run_name, "_",
@@ -230,6 +167,9 @@ perform_analysis <- function(ptype) {
   
   write_csv(wait_band_changes, paste0("output/", run_name, "_",
                                       ptype, "_band_changes.csv"))
+  
+  write_csv(scotland_medians, paste0("output/", run_name, "_",
+                                  ptype, "_scotland_medians.csv"))
   
   write_csv(board_medians, paste0("output/", run_name, "_",
                                   ptype, "_board_medians.csv"))

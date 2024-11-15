@@ -16,4 +16,4 @@ rule <- "all"
 boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
 
 # out
-run_name <- "all"
+run_name <- "all_new_rules"
