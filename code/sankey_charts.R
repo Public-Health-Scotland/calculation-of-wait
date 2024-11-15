@@ -107,7 +107,7 @@ p <- sankeyNetwork(Links = sankey_flows, Nodes = nodes,
                    Source = "IDsource", Target = "IDtarget",
                    Value = "n", NodeID = "name",
                    sinksRight=FALSE,
-                   nodePadding = 100,
+                   nodePadding = 200,
                    fontSize = 20,
                    margin = 100)
 
