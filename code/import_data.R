@@ -21,7 +21,17 @@ library(openxlsx)
 waits_init <- read.xlsx(boxi_extract, sheet = "Ongoing waits",
                         sep.names = "_",
                         detectDates = TRUE) |> 
-  select(-c("Ongoing/Completed", "Number_Seen/On_list"))
+  select(-c("Ongoing/Completed", "Number_Seen/On_list")) |> 
+  mutate(Urgency_Category = case_when(
+    Urgency_Category %in% c("Routine",
+                            "Soon",
+                            "Priority 3a <12 weeks",
+                            "Priority 4a >12 weeks") ~ "Routine",
+    Urgency_Category %in% c("Urgent",
+                            "Priority 1a <24 hours",
+                            "Priority 2a <4 weeks") ~ "Urgent",
+    TRUE ~ "Not Known"
+  ))
 
 unavail_init <- read.xlsx(boxi_extract, sheet = "Unavailability",
                           sep.names = "_",

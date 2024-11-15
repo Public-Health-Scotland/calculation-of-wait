@@ -8,12 +8,12 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-rule <- "all"
+rule <- "all_old"
 
 #### filepaths ----
 
 # in 
-boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
+boxi_extract <- "MUIs/data_with_urgency.xlsx"
 
 # out
 run_name <- "all_new_rules"
