@@ -8,7 +8,7 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-rule <- "all_old"
+rule <- "all"
 
 #### filepaths ----
 
@@ -16,4 +16,4 @@ rule <- "all_old"
 boxi_extract <- "MUIs/data_with_urgency.xlsx"
 
 # out
-run_name <- "all_new_rules"
+run_name <- "all_new_rules_completed"

@@ -36,6 +36,10 @@ if (rule == "all") {
   
   source("code/calculate_waits_all_old_rules.R")
   
+} else if (rule == "no_urgency") {
+  
+  source("code/calculate_waits_no_urgency.R")
+  
 }
 
 
