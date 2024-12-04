@@ -106,7 +106,7 @@ offers <- offers_init |>
 # This is where you filter the dataset based on what you want to look at
 
 waits <- waits |> 
-  filter(Patient_Type == "Inpatient/Day case")
+  filter(Patient_Type == "New Outpatient")
 
 
 
@@ -196,7 +196,7 @@ declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
-      (`Appt/Adm_Date` - Offer_Date >= 10) & 
+      (`Appt/Adm_Date` - Offer_Date >= 7) & 
         str_detect(Offer_Outcome_Description, "Declined"),
       "rejected reasonable", NA)) |> 
   arrange(MUI, CHI, desc(Offer_Order)) |> 
@@ -422,14 +422,8 @@ waits_final_check <- waits_old |>
                                             last_reset)) |>
   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
-                                   as.numeric(new_wait_length)),
-         old_wait_length_check = as.numeric(target_date - Effective_Start_Date - total_unavailability)) |>
-  mutate(old_wait_length_check = if_else(old_wait_length_check < 0, 0,
-                                         as.numeric(old_wait_length_check))) |>
-  rename(old_wait_length = Number_of_waiting_list_days) |>
-  mutate(#new_wait_length = as.numeric(new_wait_length)/7,
-    #old_wait_length = as.numeric(old_wait_length)/7,
-    old_wait_length_check = as.numeric(old_wait_length_check)/7)
+                                   as.numeric(new_wait_length))) |>
+  rename(old_wait_length = Number_of_waiting_list_days)
 
 waits_final_check |>
   filter(Effective_Start_Date <= dmy("30/09/2024")) |> 
@@ -438,10 +432,9 @@ waits_final_check |>
   count(match)
 
 waits_final_check |>
-  filter(Effective_Start_Date <= dmy("30/09/2024")) |> 
   mutate(match = if_else(new_wait_length == old_wait_length,
                          1, 0)) |>
-  View()
+  count(match)
 
 waits_final_check |>
   filter(new_wait_length != old_wait_length) |>

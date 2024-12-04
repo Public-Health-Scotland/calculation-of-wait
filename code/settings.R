@@ -8,10 +8,12 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+rule <- "all"
+
 #### filepaths ----
 
-# MUI audit report
+# in 
+boxi_extract <- "MUIs/data_with_urgency.xlsx"
 
-mui_audit <- "MUIs/audit_sample/extracts/"
-
-boxi_extract <- "MUIs/Ongoing_unavailability_offers_snapshot.xlsx"
+# out
+run_name <- "all_new_rules_completed"
