@@ -66,5 +66,6 @@ rsconnect/
 
 # old_output folder
 old_output/
-
+temp/
+output/
 presentation/
