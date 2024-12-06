@@ -157,8 +157,7 @@ waits_final_check <- waits_old |>
   rename(old_wait_length = Number_of_waiting_list_days)
 
 
-non_matching_chis <- waits_final_check |> 
-  filter(old_wait_length != new_wait_length) |> 
-  select(MUI, CHI)
 
-write_csv(non_matching_chis, "temp/non_matching_chis.csv")
+non_matching_chis <- waits_final_check |> 
+  filter(old_wait_length != new_wait_length)
+

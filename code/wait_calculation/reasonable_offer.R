@@ -155,4 +155,6 @@ waits <- waits_old |>
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
 
-
+reasonable_offer <- waits |> 
+  select(MUI, CHI,
+         length_reasonable_offer = new_wait_length)

@@ -8,22 +8,52 @@
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#### Step 0 : Housekeeping ----
+#### Packages ----
+library(readr)
+library(dplyr)
 
-source("code/settings.R")
+#### Edit Filepaths ----
 
-# import data
+# in 
+boxi_extract <- "MUIs/data_with_urgency.xlsx"
+
+# out
+run_name <- "organised"
+
+#### Implement Rules ----
 source("code/import_data.R")
 
-
+# Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
 
-source("code/wait_calculation/short_notice_change.R")
+# Implement each rule change separately
+source("code/wait_calculation/reasonable_offer.R")
 source("code/wait_calculation/unavail_beyond_12.R")
 source("code/wait_calculation/resets_beyond_12.R")
 source("code/wait_calculation/no_urgency.R")
+
+# Implement all new rule changes at once
 source("code/wait_calculation/all_new_rules.R")
 
+#### Save data ----
+
+# Filter out any records whose wait can't be replicated 
+waits_final <- waits_init |> 
+  anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
+  left_join(short_notice_change, by = c("MUI","CHI")) |> 
+  left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
+  left_join(resets_beyond_12, by = c("MUI","CHI")) |> 
+  left_join(no_urgency, by = c("MUI","CHI")) |> 
+  left_join(all_new_rules, by = c("MUI","CHI"))
+
+
+dir.create(paste0("temp/", run_name))
+dir.create(paste0("output/", run_name))
+
+write_rds(non_matching_chis, paste0("temp/", run_name,
+                                    "/non_matching_chis.rds"))
+write_rds(waits_final, paste0("output/", run_name,
+                              "/waits.rds"))
 
 
 # analysis (add line)
