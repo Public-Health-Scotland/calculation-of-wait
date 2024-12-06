@@ -15,32 +15,15 @@ source("code/settings.R")
 # import data
 source("code/import_data.R")
 
-# calculate waits
-if (rule == "all") {
-  
-  source("code/calculate_waits_all_new_rules.R")
-  
-} else if (rule == "resets_beyond_12") {
-  
-  source("code/calculate_waits_resets_beyond_12.R")
-  
-} else if (rule == "unavailability_beyond_12") {
-  
-  source("code/calculate_waits_unavail_beyond_12.R")
-  
-} else if (rule == "short_notice_change") {
-  
-  source("code/calculate_waits_short_notice_change.R")
-  
-} else if (rule == "all_old") {
-  
-  source("code/calculate_waits_all_old_rules.R")
-  
-} else if (rule == "no_urgency") {
-  
-  source("code/calculate_waits_no_urgency.R")
-  
-}
+
+source("code/wait_calculation/all_old_rules.R")
+
+source("code/wait_calculation/short_notice_change.R")
+source("code/wait_calculation/unavail_beyond_12.R")
+source("code/wait_calculation/resets_beyond_12.R")
+source("code/wait_calculation/no_urgency.R")
+source("code/wait_calculation/all_new_rules.R")
+
 
 
 # analysis (add line)
