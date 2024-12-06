@@ -41,7 +41,7 @@ source("code/wait_calculation/all_new_rules.R")
 waits_final <- waits_init |> 
   rename(length_all_old_rules = Number_of_waiting_list_days) |> 
   anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
-  left_join(short_notice_change, by = c("MUI","CHI")) |> 
+  left_join(reasonable_offer, by = c("MUI","CHI")) |> 
   left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
   left_join(resets_beyond_12, by = c("MUI","CHI")) |> 
   left_join(no_urgency, by = c("MUI","CHI")) |> 
