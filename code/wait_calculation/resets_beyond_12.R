@@ -123,4 +123,6 @@ waits <- waits |>
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
 
-
+resets_beyond_12 <- waits |> 
+  select(MUI, CHI,
+         length_resets_beyond_12 = new_wait_length)
