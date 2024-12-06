@@ -21,7 +21,7 @@ boxi_extract <- "MUIs/data_with_urgency.xlsx"
 run_name <- "organised"
 
 #### Implement Rules ----
-source("code/import_data.R")
+source("code/imports/import_data.R")
 
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
@@ -39,6 +39,7 @@ source("code/wait_calculation/all_new_rules.R")
 
 # Filter out any records whose wait can't be replicated 
 waits_final <- waits_init |> 
+  rename(length_all_old_rules = Number_of_waiting_list_days) |> 
   anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
   left_join(short_notice_change, by = c("MUI","CHI")) |> 
   left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
