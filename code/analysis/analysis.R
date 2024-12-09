@@ -12,18 +12,17 @@ library(readr)
 library(networkD3)
 library(dplyr)
 library(tidyr)
+library(purrr)
 library(ggplot2)
 library(openxlsx)
 library(phsstyles)
 
-non_matching_chis <- read_rds(paste0("temp/", run_name,
-                                     "/non_matching_chis.rds")) |> 
-  mutate(MUI = as.character(MUI))
+# non_matching_chis <- read_rds(paste0("temp/", run_name,
+#                                      "/non_matching_chis.rds")) |> 
+#   mutate(MUI = as.character(MUI))
 
-waits <- waits |> 
-  read_rds(paste0("output/", run_name,
-                  "/waits.rds")) |> 
-  anti_join(non_matching_chis)
+waits <- read_rds(paste0("output/", run_name,
+                  "/waits.rds"))
 
 ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
 nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")
@@ -170,52 +169,46 @@ perform_analysis <- function(ptype, w_length) {
   
   write_csv(top_line, paste0("output/", run_name, "/",
                              ptype, "_",
-                             deparse(substitute(w_length)),
+                             as.character(w_length),
                              "_top_line_figures.csv"))
   
   write_csv(wait_band_changes, paste0("output/", run_name, "/",
                                       ptype, "_",
-                                      deparse(substitute(w_length)),
+                                      as.character(w_length),
                                       "_band_changes.csv"))
   
   write_csv(scotland_medians, paste0("output/", run_name, "/",
                                      ptype, "_",
-                                     deparse(substitute(w_length)),
+                                     as.character(w_length),
                                      "_scotland_medians.csv"))
   
   write_csv(board_medians, paste0("output/", run_name, "/",
                                   ptype, "_",
-                                  deparse(substitute(w_length)),
+                                  as.character(w_length),
                                   "_board_medians.csv"))
   
   write_csv(spec_medians, paste0("output/", run_name, "/",
                                  ptype, "_",
-                                 deparse(substitute(w_length)),
+                                 as.character(w_length),
                                  "_spec_medians.csv"))
   
   ggsave(
     paste0("output/", run_name, "/",
            ptype, "_",
-           deparse(substitute(w_length)),
+           as.character(w_length),
            "_DoW_chart.jpg"),
     scale = 3,
     plot = dow_hist)
   
+  
 }
 
-c(length_reasonable_offer, length_unavail_beyond_12)
+rules <- c(expr(length_reasonable_offer),
+           expr(length_unavail_beyond_12),
+           expr(length_resets_beyond_12),
+           expr(length_all_new_rules))
 
-perform_analysis("IPDC", length_reasonable_offer)
-perform_analysis("IPDC", length_unavail_beyond_12)
-perform_analysis("IPDC", length_resets_beyond_12)
-perform_analysis("IPDC", length_reasonable_offer)
+map(rules, perform_analysis, ptype = "IPDC")
+map(rules, perform_analysis, ptype = "NOP")
+map(rules, perform_analysis, ptype = "All")
 
-perform_analysis("NOP", length_reasonable_offer)
-perform_analysis("NOP", length_unavail_beyond_12)
-perform_analysis("NOP", length_resets_beyond_12)
-perform_analysis("NOP", length_reasonable_offer)
-
-perform_analysis("All", length_reasonable_offer)
-perform_analysis("All", length_unavail_beyond_12)
-perform_analysis("All", length_resets_beyond_12)
-perform_analysis("All", length_reasonable_offer)
