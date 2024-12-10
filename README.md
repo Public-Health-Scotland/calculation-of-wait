@@ -4,7 +4,7 @@ implementing/investigating the SoT calculation of wait rules under the new guida
 
 ## code
 
-**wait_calculation/** - This folder contains scripts which calculate \
+**wait_calculation/** - This folder contains scripts which calculate wait lengths using specified rules \
 **imports/** - This folder contains scripts which import BOXI reports \
 
 ### analysis/

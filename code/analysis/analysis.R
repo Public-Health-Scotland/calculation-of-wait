@@ -17,9 +17,7 @@ library(ggplot2)
 library(openxlsx)
 library(phsstyles)
 
-# non_matching_chis <- read_rds(paste0("temp/", run_name,
-#                                      "/non_matching_chis.rds")) |> 
-#   mutate(MUI = as.character(MUI))
+run_name <- "organised"
 
 waits <- read_rds(paste0("output/", run_name,
                   "/waits.rds"))
@@ -202,6 +200,7 @@ perform_analysis <- function(ptype, w_length) {
   
   
 }
+
 
 rules <- c(expr(length_reasonable_offer),
            expr(length_unavail_beyond_12),
