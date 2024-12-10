@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# calculate_waits_all_old_rules.R
+# calculate_waits_short_notice_change.R
 # Angus Morton
 # 2024-11-11
 # 
-# Calculate waits based on all old rules
+# Calculate waits applying the 7-10 day change for the short notice period
 # 
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,7 +20,6 @@ unavail <- unavail_init
 
 #### Step 1 : Clock resets ----
 
-
 non_attendances <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   filter(Non_Attendance_Category_Description %in% c("Could Not Attend",
@@ -31,7 +30,7 @@ declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
-      (`Appt/Adm_Date` - Offer_Date >= 7) & 
+      (`Appt/Adm_Date` - Offer_Date >= 10) & 
         str_detect(Offer_Outcome_Description, "Declined"),
       "rejected reasonable", NA)) |> 
   arrange(MUI, CHI, desc(Offer_Order)) |> 
@@ -144,7 +143,7 @@ waits_old <- waits_with_resets |>
   left_join(unavail_old, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
-waits_final_check <- waits_old |>
+waits <- waits_old |>
   mutate(
     Effective_Start_Date = ymd(Effective_Start_Date),
     last_reset = ymd(last_reset)) |>
@@ -156,9 +155,6 @@ waits_final_check <- waits_old |>
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
 
-
-non_matching_chis <- waits_final_check |> 
-  filter(old_wait_length != new_wait_length) |> 
-  select(MUI, CHI)
-
-write_csv(non_matching_chis, "temp/non_matching_chis.csv")
+reasonable_offer <- waits |> 
+  select(MUI, CHI,
+         length_reasonable_offer = new_wait_length)

@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# calculate_waits_short_notice_change.R
+# calculate_waits_no_urgency.R
 # Angus Morton
 # 2024-11-11
 # 
-# Calculate waits applying the 7-10 day change for the short notice period
+# Calculate waits without taking urgency into account for declined pairs
 # 
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,15 +30,14 @@ declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
   mutate(
     rejected_reasonable = if_else(
-      (`Appt/Adm_Date` - Offer_Date >= 10) & 
+      (`Appt/Adm_Date` - Offer_Date >= 7) & 
         str_detect(Offer_Outcome_Description, "Declined"),
       "rejected reasonable", NA)) |> 
   arrange(MUI, CHI, desc(Offer_Order)) |> 
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
-                              lag(rejected_reasonable) == "rejected reasonable" &
-                              Urgency_Category != "Urgent", 1, 0)
+                              lag(rejected_reasonable) == "rejected reasonable", 1, 0)
   ) |> 
   ungroup() |> 
   filter(declined_pair == 1) |> 
@@ -154,5 +153,9 @@ waits <- waits_old |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
+
+no_urgency <- waits |> 
+  select(MUI,CHI,
+         length_no_urgency = new_wait_length)
 
 

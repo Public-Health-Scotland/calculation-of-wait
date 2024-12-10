@@ -15,13 +15,19 @@ library(dplyr)
 library(lubridate)
 library(tidylog)
 
+run_name <- "organised"
+
+waits <- read_rds(paste0("output/", run_name,
+                         "/waits.rds"))
+
 breakdown <- waits |> 
-  filter(old_wait_length > (104*7),
-         new_wait_length < (12*7)) |> 
+  filter(length_all_old_rules > (104*7),
+         length_all_new_rules < (12*7)) |> 
   summarise(
-    waits_under_12 = sum(new_wait_length < (12*7)),
-    waits_under_4 = sum(new_wait_length < (4*7))
+    waits_under_12 = sum(length_all_new_rules < (12*7)),
+    waits_under_4 = sum(length_all_new_rules < (4*7))
   )
 
-write_csv(breakdown, "output/all_new_rules_long_to_short.csv")
+write_csv(breakdown, paste0("output/", run_name, "/",
+                            "all_new_rules_long_to_short.csv"))
   

@@ -16,25 +16,29 @@ library(phsstyles)
 
 #### Step 0 : Housekeeping ----
 
-non_matching_chis <- read_csv("temp/non_matching_chis.csv") |> 
-  mutate(MUI = as.character(MUI))
+run_name <- "organised"
 
-waits <- waits |> 
-  anti_join(non_matching_chis)
+rule <- expr(length_all_new_rules)
+
+
+#### Step 1 : wrangling ----
+
+waits <- read_rds(paste0("output/", run_name,
+                         "/waits.rds"))
 
 wait_band_changes <- waits |> 
   mutate(
     bin_new = case_when(
-      new_wait_length/7 < 52 ~ "0-52",
-      between(new_wait_length/7, 52, 78) ~ "52-78",
-      between(new_wait_length/7, 78, 104) ~ "78-104",
-      new_wait_length/7 >= 104 ~ "104+"
+      {{ rule }}/7 < 52 ~ "0-52",
+      between({{ rule }}/7, 52, 78) ~ "52-78",
+      between({{ rule }}/7, 78, 104) ~ "78-104",
+      {{ rule }}/7 >= 104 ~ "104+"
     ),
     bin_old = case_when(
-      old_wait_length/7 < 52 ~ "0-52",
-      between(old_wait_length/7, 52, 78) ~ "52-78",
-      between(old_wait_length/7, 78, 104) ~ "78-104",
-      old_wait_length/7 >= 104 ~ "104+"
+      length_all_old_rules/7 < 52 ~ "0-52",
+      between(length_all_old_rules/7, 52, 78) ~ "52-78",
+      between(length_all_old_rules/7, 78, 104) ~ "78-104",
+      length_all_old_rules/7 >= 104 ~ "104+"
     )) |> 
   mutate(bin_new = factor(bin_new, levels = c("0-52","52-78",
                                               "78-104","104+")),
@@ -47,16 +51,16 @@ wait_band_changes_nop <- waits |>
   filter(Patient_Type == "New Outpatient") |> 
   mutate(
     bin_new = case_when(
-      new_wait_length/7 < 52 ~ "0-52",
-      between(new_wait_length/7, 52, 78) ~ "52-78",
-      between(new_wait_length/7, 78, 104) ~ "78-104",
-      new_wait_length/7 >= 104 ~ "104+"
+      {{ rule }}/7 < 52 ~ "0-52",
+      between({{ rule }}/7, 52, 78) ~ "52-78",
+      between({{ rule }}/7, 78, 104) ~ "78-104",
+      {{ rule }}/7 >= 104 ~ "104+"
     ),
     bin_old = case_when(
-      old_wait_length/7 < 52 ~ "0-52",
-      between(old_wait_length/7, 52, 78) ~ "52-78",
-      between(old_wait_length/7, 78, 104) ~ "78-104",
-      old_wait_length/7 >= 104 ~ "104+"
+      length_all_old_rules/7 < 52 ~ "0-52",
+      between(length_all_old_rules/7, 52, 78) ~ "52-78",
+      between(length_all_old_rules/7, 78, 104) ~ "78-104",
+      length_all_old_rules/7 >= 104 ~ "104+"
     )) |> 
   mutate(bin_new = factor(bin_new, levels = c("0-52","52-78",
                                               "78-104","104+")),
@@ -69,16 +73,16 @@ wait_band_changes_ipdc <- waits |>
   filter(Patient_Type == "Inpatient/Day case") |> 
   mutate(
     bin_new = case_when(
-      new_wait_length/7 < 52 ~ "0-52",
-      between(new_wait_length/7, 52, 78) ~ "52-78",
-      between(new_wait_length/7, 78, 104) ~ "78-104",
-      new_wait_length/7 >= 104 ~ "104+"
+      {{ rule }}/7 < 52 ~ "0-52",
+      between({{ rule }}/7, 52, 78) ~ "52-78",
+      between({{ rule }}/7, 78, 104) ~ "78-104",
+      {{ rule }}/7 >= 104 ~ "104+"
     ),
     bin_old = case_when(
-      old_wait_length/7 < 52 ~ "0-52",
-      between(old_wait_length/7, 52, 78) ~ "52-78",
-      between(old_wait_length/7, 78, 104) ~ "78-104",
-      old_wait_length/7 >= 104 ~ "104+"
+      length_all_old_rules/7 < 52 ~ "0-52",
+      between(length_all_old_rules/7, 52, 78) ~ "52-78",
+      between(length_all_old_rules/7, 78, 104) ~ "78-104",
+      length_all_old_rules/7 >= 104 ~ "104+"
     )) |> 
   mutate(bin_new = factor(bin_new, levels = c("0-52","52-78",
                                               "78-104","104+")),
@@ -87,7 +91,9 @@ wait_band_changes_ipdc <- waits |>
   filter(bin_new != bin_old) |> 
   count(bin_old, bin_new)
 
+#### Step 2 : Sankey diagram ----
 
+# Change this object to look at NOP or IPDC specifically
 sankey_flows <- wait_band_changes |>
   mutate(bin_old = paste0(as.character(bin_old), " old"),
          bin_new = paste0(as.character(bin_new), " new"))

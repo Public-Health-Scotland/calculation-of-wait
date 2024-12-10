@@ -1,9 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# calculate_waits_no_urgency.R
+# calculate_waits_all_old_rules.R
 # Angus Morton
 # 2024-11-11
 # 
-# Calculate waits without taking urgency into account for declined pairs
+# Calculate waits based on all old rules
 # 
 # R version 4.1.2 (2021-11-01)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,6 +19,7 @@ offers <- offers_init
 unavail <- unavail_init
 
 #### Step 1 : Clock resets ----
+
 
 non_attendances <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
@@ -37,7 +38,8 @@ declined_pairs2 <- waits |>
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
-                              lag(rejected_reasonable) == "rejected reasonable", 1, 0)
+                              lag(rejected_reasonable) == "rejected reasonable" &
+                              Urgency_Category != "Urgent", 1, 0)
   ) |> 
   ungroup() |> 
   filter(declined_pair == 1) |> 
@@ -142,7 +144,7 @@ waits_old <- waits_with_resets |>
   left_join(unavail_old, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
-waits <- waits_old |>
+waits_final_check <- waits_old |>
   mutate(
     Effective_Start_Date = ymd(Effective_Start_Date),
     last_reset = ymd(last_reset)) |>
@@ -156,4 +158,6 @@ waits <- waits_old |>
 
 
 
+non_matching_chis <- waits_final_check |> 
+  filter(old_wait_length != new_wait_length)
 

@@ -55,8 +55,6 @@ rsconnect/
 # CSVs
 *.csv
 
-# xlsx
-*.xlsx
 
 *.jpg
 *.rds
@@ -66,5 +64,7 @@ rsconnect/
 
 # old_output folder
 old_output/
-
+MUIs/
+temp/
+output/
 presentation/
