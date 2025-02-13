@@ -122,6 +122,19 @@ perform_analysis <- function(ptype, w_length) {
               over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old) |> 
     ungroup()
   
+  board_spec_medians <- data |> 
+    group_by(NHS_Board_of_Treatment, grouped_specialty) |> 
+    summarise(median_new = median({{ w_length }}),
+              median_old = median(length_all_old_rules),
+              `90th new` = quantile({{ w_length }}, 0.9),
+              `90th old` = quantile(length_all_old_rules, 0.9),
+              over_52_new = sum({{ w_length }}>364),
+              over_52_old = sum(length_all_old_rules>364),
+              med_diff_p = 100*(median_new-median_old)/median_old,
+              `90th_diff_p` = 100*(`90th new`-`90th old`)/`90th old`,
+              over_52_diff_p = 100*(over_52_new-over_52_old)/over_52_old) |> 
+    ungroup()
+  
   
   # create bands based on planned care targets to look at records which
   # have changed
@@ -190,6 +203,11 @@ perform_analysis <- function(ptype, w_length) {
                                  as.character(w_length),
                                  "_spec_medians.csv"))
   
+  write_csv(board_spec_medians, paste0("output/", run_name, "/",
+                                       ptype, "_",
+                                       as.character(w_length),
+                                       "_board_spec_medians.csv"))
+  
   ggsave(
     paste0("output/", run_name, "/",
            ptype, "_",
@@ -205,6 +223,7 @@ perform_analysis <- function(ptype, w_length) {
 rules <- c(expr(length_reasonable_offer),
            expr(length_unavail_beyond_12),
            expr(length_resets_beyond_12),
+           expr(length_no_urgency),
            expr(length_all_new_rules))
 
 map(rules, perform_analysis, ptype = "IPDC")
