@@ -15,10 +15,10 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-boxi_extract <- "MUIs/data_with_urgency.xlsx"
+boxi_extract <- "MUIs/december.xlsx"
 
 # out
-run_name <- "organised"
+run_name <- "december"
 
 #### Implement Rules ----
 source("code/imports/import_data.R")
@@ -41,10 +41,10 @@ source("code/wait_calculation/all_new_rules.R")
 waits_final <- waits_init |> 
   rename(length_all_old_rules = Number_of_waiting_list_days) |> 
   anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
-  left_join(reasonable_offer, by = c("MUI","CHI")) |> 
-  left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
-  left_join(resets_beyond_12, by = c("MUI","CHI")) |> 
-  left_join(no_urgency, by = c("MUI","CHI")) |> 
+  # left_join(reasonable_offer, by = c("MUI","CHI")) |> 
+  # left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
+  # left_join(resets_beyond_12, by = c("MUI","CHI")) |> 
+  # left_join(no_urgency, by = c("MUI","CHI")) |> 
   left_join(all_new_rules, by = c("MUI","CHI"))
 
 
