@@ -47,14 +47,16 @@ waits <- waits |>
     NHS_Board_of_Treatment %in% initial_boards ~ length_all_new_rules,
     TRUE ~ length_all_old_rules))
 
-top_10 <- waits |> 
+top_10_nop <- waits |> 
+  filter(Patient_Type =="New Outpatient") |> 
   count(grouped_specialty) |> 
   arrange(desc(n)) |> 
   head(10) |> 
   select(grouped_specialty) |> 
   pull()
 
-scot_medians <- waits |> 
+scot_medians_nop <- waits |> 
+  filter(Patient_Type =="New Outpatient") |> 
   summarise(median_old = median(length_all_old_rules),
             median_stag = median(length_staggered),
             median_new = median(length_all_new_rules),
@@ -72,8 +74,9 @@ scot_medians <- waits |>
             over_52_d_p_full = 100*(over_52_new-over_52_old)/over_52_old) |> 
   mutate(grouped_specialty = "All Specialties", .before = 1)
 
-spec_medians <- waits |> 
-  filter(grouped_specialty %in% top_10) |> 
+spec_medians_nop <- waits |> 
+  filter(grouped_specialty %in% top_10_nop) |> 
+  filter(Patient_Type =="New Outpatient") |> 
   group_by(grouped_specialty) |> 
   summarise(median_old = median(length_all_old_rules),
             median_stag = median(length_staggered),
@@ -92,7 +95,61 @@ spec_medians <- waits |>
             over_52_d_p_full = 100*(over_52_new-over_52_old)/over_52_old) |> 
   ungroup()
 
-spec_meds <- bind_rows(scot_medians, spec_medians)
+spec_meds_nop <- bind_rows(scot_medians_nop, spec_medians_nop)
 
-write_csv(spec_meds, paste0("output/", run_name, "/",
-                            "spec_medians.csv"))
+write_csv(spec_meds_nop, paste0("output/", run_name, "/",
+                                "spec_medians_nop.csv"))
+
+
+top_10_ipdc <- waits |> 
+  filter(Patient_Type =="Inpatient/Day case") |> 
+  count(grouped_specialty) |> 
+  arrange(desc(n)) |> 
+  head(10) |> 
+  select(grouped_specialty) |> 
+  pull()
+
+scot_medians_ipdc <- waits |> 
+  filter(Patient_Type =="Inpatient/Day case") |> 
+  summarise(median_old = median(length_all_old_rules),
+            median_stag = median(length_staggered),
+            median_new = median(length_all_new_rules),
+            `90th old` = quantile(length_all_old_rules, 0.9),
+            `90th stag` = quantile(length_staggered, 0.9),
+            `90th new` = quantile(length_all_new_rules, 0.9),
+            over_52_old = sum(length_all_old_rules>364),
+            over_52_stag = sum(length_staggered>364),
+            over_52_new = sum(length_all_new_rules>364),
+            med_d_p_stag = 100*(median_stag-median_old)/median_old,
+            med_d_p_full = 100*(median_new-median_old)/median_old,
+            `90th_d_p_stag` = 100*(`90th stag`-`90th old`)/`90th old`,
+            `90th_d_p_full` = 100*(`90th new`-`90th old`)/`90th old`,
+            over_52_d_p_stag = 100*(over_52_stag-over_52_old)/over_52_old,
+            over_52_d_p_full = 100*(over_52_new-over_52_old)/over_52_old) |> 
+  mutate(grouped_specialty = "All Specialties", .before = 1)
+
+spec_medians_ipdc <- waits |> 
+  filter(grouped_specialty %in% top_10_ipdc) |> 
+  filter(Patient_Type =="Inpatient/Day case") |> 
+  group_by(grouped_specialty) |> 
+  summarise(median_old = median(length_all_old_rules),
+            median_stag = median(length_staggered),
+            median_new = median(length_all_new_rules),
+            `90th old` = quantile(length_all_old_rules, 0.9),
+            `90th stag` = quantile(length_staggered, 0.9),
+            `90th new` = quantile(length_all_new_rules, 0.9),
+            over_52_old = sum(length_all_old_rules>364),
+            over_52_stag = sum(length_staggered>364),
+            over_52_new = sum(length_all_new_rules>364),
+            med_d_p_stag = 100*(median_stag-median_old)/median_old,
+            med_d_p_full = 100*(median_new-median_old)/median_old,
+            `90th_d_p_stag` = 100*(`90th stag`-`90th old`)/`90th old`,
+            `90th_d_p_full` = 100*(`90th new`-`90th old`)/`90th old`,
+            over_52_d_p_stag = 100*(over_52_stag-over_52_old)/over_52_old,
+            over_52_d_p_full = 100*(over_52_new-over_52_old)/over_52_old) |> 
+  ungroup()
+
+spec_meds_ipdc <- bind_rows(scot_medians_ipdc, spec_medians_ipdc)
+
+write_csv(spec_meds_ipdc, paste0("output/", run_name, "/",
+                                "spec_medians_ipdc.csv"))
