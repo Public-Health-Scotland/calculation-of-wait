@@ -17,7 +17,7 @@ library(tidylog)
 
 #### Read in data ----
 
-waits <- read_rds("output/uat_muis/waits.rds")
+waits <- read_rds("output/uat_muis_completed/waits.rds")
 
 #### Separate MUIs ----
 
@@ -59,10 +59,10 @@ waits <- waits |>
 
 #### Save out ----
 
-write_csv(reasonable, paste0("output/uat_muis/", "reasonable.csv"))
-write_csv(unavailability, paste0("output/uat_muis/", "unavailability.csv"))
-write_csv(resets, paste0("output/uat_muis/", "resets.csv"))
-write_csv(urgency, paste0("output/uat_muis/", "urgency.csv"))
-write_csv(all_rules, paste0("output/uat_muis/", "all_rules.csv"))
+write_csv(reasonable, paste0("output/uat_muis_completed//", "reasonable.csv"))
+write_csv(unavailability, paste0("output/uat_muis_completed//", "unavailability.csv"))
+write_csv(resets, paste0("output/uat_muis_completed//", "resets.csv"))
+write_csv(urgency, paste0("output/uat_muis_completed//", "urgency.csv"))
+write_csv(all_rules, paste0("output/uat_muis_completed//", "all_rules.csv"))
 
-write_csv(waits, paste0("output/uat_muis/", "all_data.csv"))
+write_csv(waits, paste0("output/uat_muis_completed//", "all_data.csv"))

@@ -15,13 +15,13 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-boxi_extract <- "MUIs/december.xlsx"
+boxi_extract <- "MUIs/completed_waits_dec24.xlsx"
 
 # out
-run_name <- "uat_muis"
+run_name <- "uat_muis_completed"
 
 #### Implement Rules ----
-source("code/imports/import_data.R")
+source("code/imports/import_data_completed.R")
 
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
