@@ -17,7 +17,7 @@ library(ggplot2)
 library(openxlsx)
 library(phsstyles)
 
-run_name <- "organised"
+run_name <- "qe_mar_25"
 
 waits <- read_rds(paste0("output/", run_name,
                   "/waits.rds"))
