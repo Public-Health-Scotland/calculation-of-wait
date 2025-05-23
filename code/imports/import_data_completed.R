@@ -38,6 +38,12 @@ waits_init_1 <- waits_init_1 |>
 
 waits_init <- bind_rows(waits_init, waits_init_1)
 
+waits_init <- waits_init |> 
+  filter(Date == "31/12/2024") |> 
+  rename(Number_of_waiting_list_days = Days_on_Waiting_List)
+
+waits_init <- waits_init |> 
+  rename(target_date = List_removal_date)
 
 unavail_init <- read.xlsx(boxi_extract, sheet = "Unavailability",
                           sep.names = "_",
@@ -195,5 +201,6 @@ offers_init <- offers_init |>
                          NA, Offer_Date))
 
 
-waits <- waits_init |> 
-  filter(Date == "30/09/2024")
+waits_init <- waits_init |> 
+  filter(Date == "31/12/2024") |> 
+  rename(Number_of_waiting_list_days = Days_on_Waiting_List)

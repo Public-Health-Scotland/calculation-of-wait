@@ -156,6 +156,18 @@ waits_final_check <- waits_old |>
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
 
+# waits_final_check <- waits_old |>
+#   mutate(
+#     Effective_Start_Date = ymd(Effective_Start_Date),
+#     last_reset = ymd(last_reset)) |>
+#   mutate(new_effective_start_date = if_else(is.na(last_reset),
+#                                             Init_Start_Date,
+#                                             last_reset)) |>
+#   mutate(new_wait_length = List_removal_date-days(total_unavailability)-new_effective_start_date) |>
+#   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
+#                                    as.numeric(new_wait_length))) |>
+#   rename(old_wait_length = Number_of_waiting_list_days)
+
 
 
 non_matching_chis <- waits_final_check |> 
