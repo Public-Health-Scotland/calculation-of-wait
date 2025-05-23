@@ -42,7 +42,8 @@ last_declined_pairs <- waits |>
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
-                              lag(rejected_reasonable) == "rejected reasonable", 1, 0)
+                              lag(rejected_reasonable) == "rejected reasonable" &
+                              Urgency_Category != "Urgent", 1, 0)
   ) |> 
   ungroup() |> 
   filter(declined_pair == 1) |> 
