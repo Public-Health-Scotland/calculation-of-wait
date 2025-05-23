@@ -18,11 +18,10 @@ library(ggplot2)
 library(openxlsx)
 library(phsstyles)
 
-run_name <- "december"
+run_name <- "qe_mar_25"
 
 waits <- read_rds(paste0("output/", run_name,
-                         "/waits.rds")) |> 
-  filter(NHS_Board_of_Treatment != "NHS Ayrshire & Arran")
+                         "/waits.rds"))
 
 ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
 nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")

@@ -15,13 +15,13 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-boxi_extract <- "MUIs/completed_waits_dec24.xlsx"
+boxi_extract <- "MUIs/qe_mar_25.xlsx"
 
 # out
-run_name <- "uat_muis_completed"
+run_name <- "qe_mar_25"
 
 #### Implement Rules ----
-source("code/imports/import_data_completed.R")
+source("code/imports/import_data.R")
 
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
@@ -57,7 +57,7 @@ write_rds(waits_final, paste0("output/", run_name,
                               "/waits.rds"))
 
 
-# analysis (gitea back up)
+# analysis
 source("code/analysis.R")
 
 
