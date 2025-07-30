@@ -58,7 +58,10 @@ write_rds(waits_final, paste0("output/", run_name,
 
 
 # analysis
-source("code/analysis.R")
+source("code/analysis/analysis.R")
+
+# Publication report table for old vs new length of wait comparison
+source("code/analysis/publication_table.R")
 
 
 
