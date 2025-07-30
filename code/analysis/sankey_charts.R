@@ -16,7 +16,8 @@ library(phsstyles)
 
 #### Step 0 : Housekeeping ----
 
-run_name <- "organised"
+# Optionally overwrite run_name
+#run_name <- "qe_jun_25"
 
 rule <- expr(length_all_new_rules)
 
