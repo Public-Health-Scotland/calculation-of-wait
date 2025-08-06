@@ -85,7 +85,19 @@ offers_init_4 <- offers_init_4 |>
   rename(CHI = Pat_CHI_Number,
          MUI = Mandatory_Unique_Identifier)
 
-offers_init <- bind_rows(offers_init, offers_init_2, offers_init_3, offers_init_4)
+offers_init_5 <- read.xlsx(boxi_extract, sheet = "Appointments & Offers(4)",
+                           colNames = FALSE,
+                           detectDates = TRUE)
+
+names(offers_init_5) <- offers_names
+
+offers_init_5 <- offers_init_5 |> 
+  select(-Patient_Type_Cohort_Description) |> 
+  rename(CHI = Pat_CHI_Number,
+         MUI = Mandatory_Unique_Identifier)
+
+offers_init <- bind_rows(offers_init, offers_init_2, offers_init_3, offers_init_4,
+                         offers_init_5)
 
 #### Step 2 : trim off post target data ----
 # If running multiple times run from here to save you reading in the files

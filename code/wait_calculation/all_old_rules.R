@@ -168,7 +168,9 @@ waits_final_check <- waits_old |>
 #                                    as.numeric(new_wait_length))) |>
 #   rename(old_wait_length = Number_of_waiting_list_days)
 
-
+all_old_rules <- waits_final_check |> 
+  select(MUI, CHI,
+         length_all_old_rules = new_wait_length)
 
 non_matching_chis <- waits_final_check |> 
   filter(old_wait_length != new_wait_length)
