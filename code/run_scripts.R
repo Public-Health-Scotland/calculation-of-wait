@@ -15,10 +15,10 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-boxi_extract <- "MUIs/qe_mar_25.xlsx"
+boxi_extract <- "MUIs/qe_jun_25.xlsx"
 
 # out
-run_name <- "qe_mar_25"
+run_name <- "qe_jun_25"
 
 #### Implement Rules ----
 source("code/imports/import_data.R")
@@ -58,7 +58,10 @@ write_rds(waits_final, paste0("output/", run_name,
 
 
 # analysis
-source("code/analysis.R")
+source("code/analysis/analysis.R")
+
+# Publication report table for old vs new length of wait comparison
+source("code/analysis/publication_table.R")
 
 
 

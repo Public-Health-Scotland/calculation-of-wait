@@ -15,7 +15,8 @@ library(dplyr)
 library(lubridate)
 library(tidylog)
 
-run_name <- "qe_mar_25"
+# Optionally overwrite run_name
+#run_name <- "qe_jun_25"
 
 waits <- read_rds(paste0("output/", run_name,
                          "/waits.rds"))
