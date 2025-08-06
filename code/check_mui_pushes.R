@@ -20,12 +20,6 @@ boxi_extract <- "MUIs/ongoing_waits_live.xlsx"
 #### Imports ----
 source("code/imports/import_data.R")
 
-ongoing_at_cutover <- read.xlsx("MUIs/ongoing_at_cutover.xlsx",
-                                sheet = "Ongoing waits",
-                                sep.names = "_",
-                                detectDates = TRUE) |>
-  select(MUI, CHI)
-
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
 
@@ -38,7 +32,6 @@ source("code/wait_calculation/all_new_rules.R")
 # Filter out any records whose wait can't be replicated 
 waits_old_new_wh <- waits_init |> 
   rename(length_wh = Number_of_waiting_list_days) |> 
-  inner_join(ongoing_at_cutover, by = c("MUI", "CHI")) |> 
   left_join(all_old_rules, by = c("MUI","CHI")) |> 
   left_join(all_new_rules, by = c("MUI","CHI"))
 
