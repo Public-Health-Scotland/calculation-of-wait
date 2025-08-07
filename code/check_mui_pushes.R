@@ -14,11 +14,14 @@ library(dplyr)
 
 #### Edit Filepaths ----
 
-boxi_extract <- "MUIs/ongoing_waits_live.xlsx"
+csv_folder <- "MUIs/ongoing_cutover/"
 
+#
+#boxi_extract <- "MUIs/ongoing_waits_live.xlsx"
+#
 
 #### Imports ----
-source("code/imports/import_data.R")
+source("code/imports/import_csvs.R")
 
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
