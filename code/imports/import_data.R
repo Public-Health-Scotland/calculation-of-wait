@@ -41,52 +41,53 @@ unavail_init <- read.xlsx(boxi_extract, sheet = "Unavailability",
   rename(CHI = Pat_CHI_Number,
          MUI = Mandatory_Unique_Identifier)
 
+
+# Read the initial Appointments & Offers sheet with column names
 offers_init <- read.xlsx(boxi_extract, sheet = "Appointments & Offers",
                          sep.names = "_",
                          detectDates = TRUE)
 
+# Save the column names for consistency
 offers_names <- names(offers_init)
 
-offers_init <- offers_init |> 
-  select(-Patient_Type_Cohort_Description) |> 
+# Clean the initial sheet
+offers_init <- offers_init |>
+  select(-Patient_Type_Cohort_Description) |>
   rename(CHI = Pat_CHI_Number,
          MUI = Mandatory_Unique_Identifier)
 
-offers_init_2 <- read.xlsx(boxi_extract, sheet = "Appointments & Offers(1)",
-                           colNames = FALSE,
-                           detectDates = TRUE)
+# Get all sheet names
+sheet_names <- getSheetNames(boxi_extract)
 
-names(offers_init_2) <- offers_names
+# Get any additional "Appointments & Offers" sheets
+additional_offers_sheets <- sheet_names[-(1:3)]
 
-offers_init_2 <- offers_init_2 |> 
-  select(-Patient_Type_Cohort_Description) |> 
-  rename(CHI = Pat_CHI_Number,
-         MUI = Mandatory_Unique_Identifier)
+# If additional sheets exist, pull the data, clean and combine with offers_init.
+if (length(additional_offers_sheets) > 0) {
+  
+  read_additional_offers <- function(sheet) {
+    df <- read.xlsx(boxi_extract, sheet = sheet,
+                    colNames = FALSE,
+                    detectDates = TRUE)
+    names(df) <- offers_names
+    df |>
+      select(-Patient_Type_Cohort_Description) |>
+      rename(CHI = Pat_CHI_Number,
+             MUI = Mandatory_Unique_Identifier)
+  }
+  
+  # Read and clean each additional sheet
+  additional_offers_data <- lapply(additional_offers_sheets, read_additional_offers) |>
+    bind_rows()
+  
+  # Combine all data
+  offers_init <- bind_rows(offers_init, additional_offers_data)
+  
+}
 
-offers_init_3 <- read.xlsx(boxi_extract, sheet = "Appointments & Offers(2)",
-                           colNames = FALSE,
-                           detectDates = TRUE)
+# Remove duplicated offers dataframe with the extra sheets
+rm(additional_offers_data)
 
-names(offers_init_3) <- offers_names
-
-offers_init_3 <- offers_init_3 |> 
-  select(-Patient_Type_Cohort_Description) |> 
-  rename(CHI = Pat_CHI_Number,
-         MUI = Mandatory_Unique_Identifier)
-
-offers_init_4 <- read.xlsx(boxi_extract, sheet = "Appointments & Offers(3)",
-                           colNames = FALSE,
-                           detectDates = TRUE)
-
-names(offers_init_4) <- offers_names
-
-offers_init_4 <- offers_init_4 |> 
-  select(-Patient_Type_Cohort_Description) |> 
-  rename(CHI = Pat_CHI_Number,
-         MUI = Mandatory_Unique_Identifier)
-
-
-offers_init <- bind_rows(offers_init, offers_init_2, offers_init_3, offers_init_4)
 
 #### Step 2 : trim off post target data ----
 # If running multiple times run from here to save you reading in the files
