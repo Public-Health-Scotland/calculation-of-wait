@@ -110,7 +110,7 @@ perform_analysis <- function(ptype, w_length) {
   
   
   spec_medians <- data |> 
-    filter(grouped_specialty %in% top_10) |> 
+#    filter(grouped_specialty %in% top_10) |> 
     group_by(grouped_specialty) |> 
     summarise(median_new = median({{ w_length }}),
               median_old = median(length_all_old_rules),

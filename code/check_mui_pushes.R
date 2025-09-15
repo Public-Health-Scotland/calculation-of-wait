@@ -48,5 +48,5 @@ matches <- waits_old_new_wh |>
 
 write_csv(matches, paste0("output/", Sys.Date(), "_matches.csv"))
 
-
+write_rds(waits_old_new_wh, paste0("output/waits_old_new_wh.rds"))
 

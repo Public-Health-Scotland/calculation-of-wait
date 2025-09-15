@@ -15,13 +15,13 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-boxi_extract <- "MUIs/qe_jun_25.xlsx"
+csv_folder <- "MUIs/WTs guidance review ongoing waits snapshot - August/"
 
 # out
-run_name <- "qe_jun_25"
+run_name <- "aug_25"
 
 #### Implement Rules ----
-source("code/imports/import_data.R")
+source("code/imports/import_csvs.R")
 
 # Replicates existing rules and exports the non matching mui-chi pairs
 source("code/wait_calculation/all_old_rules.R")
@@ -40,7 +40,7 @@ source("code/wait_calculation/all_new_rules.R")
 # Filter out any records whose wait can't be replicated 
 waits_final <- waits_init |> 
   rename(length_all_old_rules = Number_of_waiting_list_days) |> 
-  anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
+  #anti_join(non_matching_chis, by = c("MUI","CHI")) |> 
   left_join(reasonable_offer, by = c("MUI","CHI")) |>
   left_join(unavail_beyond_12, by = c("MUI","CHI")) |>
   left_join(resets_beyond_12, by = c("MUI","CHI")) |>
