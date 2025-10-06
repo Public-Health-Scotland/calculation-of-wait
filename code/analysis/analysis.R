@@ -221,10 +221,11 @@ perform_analysis <- function(ptype, w_length) {
 }
 
 
-rules <- c(expr(length_reasonable_offer),
-           expr(length_unavail_beyond_12),
-           expr(length_resets_beyond_12),
-           expr(length_no_urgency),
+rules <- c(expr(length_all_old_rules),
+           # expr(length_reasonable_offer),
+           # expr(length_unavail_beyond_12),
+           # expr(length_resets_beyond_12),
+           # expr(length_no_urgency),
            expr(length_all_new_rules))
 
 map(rules, perform_analysis, ptype = "IPDC")

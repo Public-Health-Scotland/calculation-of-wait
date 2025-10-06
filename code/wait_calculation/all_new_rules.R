@@ -37,20 +37,20 @@ last_declined_pairs <- waits |>
     rejected_reasonable = if_else(
       (`Appt/Adm_Date` - Offer_Date >= 10) & 
         str_detect(Offer_Outcome_Description, "Declined"),
-      "rejected reasonable", NA)) |> 
+      "rejected reasonable", "not rejected reasonable")) |> 
+  filter(`Appt/Adm_Date` - Offer_Date >= 10,
+         !is.na(Offer_Outcome_Description)) |>  # get rid of irrelevant offers
   arrange(MUI, CHI, desc(Offer_Order)) |> 
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
-                              lag(rejected_reasonable) == "rejected reasonable", 1, 0)
+                              lag(rejected_reasonable) == "rejected reasonable" &
+                              lag(rejected_reasonable, 2, default = "start") != "rejected reasonable", 1, 0)
   ) |> 
-  ungroup() |> 
   filter(declined_pair == 1) |> 
-  group_by(MUI, CHI) |> 
-  summarise(
-    last_rejection = max(Response_Rcvd_Date)
-  ) |> 
-  select(MUI, CHI, last_rejection)
+  filter(Response_Rcvd_Date == max(Response_Rcvd_Date)) |> 
+  ungroup() |> 
+  select(MUI, CHI, last_rejection = Response_Rcvd_Date)
 
 clock_resets <- last_declined_pairs |> 
   full_join(last_non_attendances, by = c("MUI", "CHI")) |> 
@@ -101,6 +101,18 @@ waits <- waits |>
   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
                                    as.numeric(new_wait_length))) |>
   rename(old_wait_length = Number_of_waiting_list_days)
+
+# waits <- waits |>
+#   mutate(
+#     Effective_Start_Date = ymd(Effective_Start_Date),
+#     last_reset = ymd(last_reset)) |>
+#   mutate(new_effective_start_date = if_else(is.na(last_reset),
+#                                             Init_Start_Date,
+#                                             last_reset)) |>
+#   mutate(new_wait_length = List_removal_date-days(total_unavailability)-new_effective_start_date) |>
+#   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
+#                                    as.numeric(new_wait_length))) |>
+#   rename(old_wait_length = Number_of_waiting_list_days)
 
 all_new_rules <- waits |> 
   select(MUI, CHI,

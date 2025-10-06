@@ -18,7 +18,23 @@ waits <- waits_init
 offers <- offers_init
 unavail <- unavail_init
 
+#### Step 0 : trim unavailability ----
+
+unavail <- unavail |> 
+  left_join(select(waits, CHI, MUI, WTS), by = c("CHI", "MUI")) |> 
+  filter(!(Unavailability_Reason_Description == "Non-TTG - no response to PFB offer of appointment" &
+           Patient_Type_Description %in% c("Inpatient", "Daycase") &
+           WTS != "050"))
+
 #### Step 1 : Clock resets ----
+
+# indefinite unavailability resets
+unavail_resets <- waits |> 
+  left_join(unavail, by = c("MUI", "CHI")) |> 
+  filter(Unavailability_Reason_Description %in% c("Medical - indefinitely unavailable",
+                                                  "Patient Advised - indefinitely unavailable")) |> 
+  mutate(last_unavail_reset = Unavail_End_Date+1) |> 
+  select(MUI, CHI, last_unavail_reset)
 
 
 non_attendances <- waits |>
@@ -33,20 +49,24 @@ declined_pairs2 <- waits |>
     rejected_reasonable = if_else(
       (`Appt/Adm_Date` - Offer_Date >= 7) & 
         str_detect(Offer_Outcome_Description, "Declined"),
-      "rejected reasonable", NA)) |> 
+      "rejected reasonable", "not rejected reasonable")) |> 
+  filter(`Appt/Adm_Date` - Offer_Date >= 7,
+         !is.na(Offer_Outcome_Description)) |>  # get rid of irrelevant offers
   arrange(MUI, CHI, desc(Offer_Order)) |> 
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
                               lag(rejected_reasonable) == "rejected reasonable" &
+                              lag(rejected_reasonable, 2, default = "start") != "rejected reasonable" &
                               Urgency_Category != "Urgent", 1, 0)
   ) |> 
-  ungroup() |> 
   filter(declined_pair == 1) |> 
+  filter(Response_Rcvd_Date == max(Response_Rcvd_Date)) |> 
+  ungroup() |> 
   select(MUI, CHI, last_rejection = Response_Rcvd_Date)
 
-all_clock_resets <- bind_rows(declined_pairs2, non_attendances) |> 
-  pivot_longer(c("last_rejection", "last_non_attendance")) |> 
+all_clock_resets <- bind_rows(declined_pairs2, non_attendances, unavail_resets) |> 
+  pivot_longer(c("last_rejection", "last_non_attendance", "last_unavail_reset")) |> 
   select(-name) |> 
   rename(reset_date = value) |> 
   filter(!is.na(reset_date))
@@ -76,8 +96,12 @@ resets_within_12 <- waits_all_resets |>
       Unavail_Start_Date < prev_reset ~ prev_reset,
       TRUE ~ Unavail_Start_Date
     )) |>
-  mutate(Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1,
-         reset_lapse = as.numeric(Unavail_Start_Date - prev_reset)) |>
+  mutate(reset_lapse = as.numeric(Unavail_Start_Date - prev_reset),
+         Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1,
+         Number_Days_Unavailable = if_else(reset_lapse == 85,
+                                           0,
+                                           Number_Days_Unavailable)
+         ) |>
   group_by(MUI, CHI, reset_date) |>
   arrange(Unavail_Start_Date) |>
   mutate(
@@ -144,18 +168,6 @@ waits_old <- waits_with_resets |>
   left_join(unavail_old, by = c("MUI", "CHI")) |>
   mutate(total_unavailability = replace_na(total_unavailability,0))
 
-waits_final_check <- waits_old |>
-  mutate(
-    Effective_Start_Date = ymd(Effective_Start_Date),
-    last_reset = ymd(last_reset)) |>
-  mutate(new_effective_start_date = if_else(is.na(last_reset),
-                                            Init_Start_Date,
-                                            last_reset)) |>
-  mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
-  mutate(new_wait_length = if_else(new_wait_length < 0, 0,
-                                   as.numeric(new_wait_length))) |>
-  rename(old_wait_length = Number_of_waiting_list_days)
-
 # waits_final_check <- waits_old |>
 #   mutate(
 #     Effective_Start_Date = ymd(Effective_Start_Date),
@@ -163,10 +175,22 @@ waits_final_check <- waits_old |>
 #   mutate(new_effective_start_date = if_else(is.na(last_reset),
 #                                             Init_Start_Date,
 #                                             last_reset)) |>
-#   mutate(new_wait_length = List_removal_date-days(total_unavailability)-new_effective_start_date) |>
+#   mutate(new_wait_length = target_date-days(total_unavailability)-new_effective_start_date) |>
 #   mutate(new_wait_length = if_else(new_wait_length < 0, 0,
 #                                    as.numeric(new_wait_length))) |>
 #   rename(old_wait_length = Number_of_waiting_list_days)
+
+waits_final_check <- waits_old |>
+  mutate(
+    Effective_Start_Date = ymd(Effective_Start_Date),
+    last_reset = ymd(last_reset)) |>
+  mutate(new_effective_start_date = if_else(is.na(last_reset),
+                                            Init_Start_Date,
+                                            last_reset)) |>
+  mutate(new_wait_length = List_removal_date-days(total_unavailability)-new_effective_start_date) |>
+  mutate(new_wait_length = if_else(new_wait_length < 0, 0,
+                                   as.numeric(new_wait_length))) |>
+  rename(old_wait_length = Number_of_waiting_list_days)
 
 all_old_rules <- waits_final_check |> 
   select(MUI, CHI,

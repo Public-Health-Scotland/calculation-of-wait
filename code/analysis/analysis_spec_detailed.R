@@ -22,10 +22,11 @@ library(openxlsx)
 library(phsstyles)
 
 # Optionally overwrite run_name
-#run_name <- "qe_jun_25"
+#run_name <- "jul_25"
 
 waits <- read_rds(paste0("output/", run_name,
-                         "/waits.rds"))
+                         "/waits.rds")) |> 
+  rename(length_warehouse = Number_of_waiting_list_days)
 
 ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
 nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")
@@ -210,14 +211,16 @@ perform_analysis <- function(ptype, w_length) {
   
 }
 
+# varname <- expr(length_warehouse)
+# 
+# perform_analysis(ptype = "IPDC",
+#                  expr(length_warehouse))
 
-rules <- c(expr(length_reasonable_offer),
-           expr(length_unavail_beyond_12),
-           expr(length_resets_beyond_12),
-           expr(length_no_urgency),
-           expr(length_all_new_rules))
+rules <- c(expr(length_warehouse))
 
 map(rules, perform_analysis, ptype = "IPDC")
 map(rules, perform_analysis, ptype = "NOP")
 map(rules, perform_analysis, ptype = "All")
+# map(rules, perform_analysis, ptype = "NOP")
+# map(rules, perform_analysis, ptype = "All")
 
