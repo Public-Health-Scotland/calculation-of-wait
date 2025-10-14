@@ -20,11 +20,17 @@ unavail <- unavail_init
 
 #### Step 0 : trim unavailability ----
 
-unavail <- unavail |> 
-  left_join(select(waits, CHI, MUI, WTS), by = c("CHI", "MUI")) |> 
+unavail <- unavail |>
+  left_join(select(waits, CHI, MUI, WTS), by = c("CHI", "MUI")) |>
   filter(!(Unavailability_Reason_Description == "Non-TTG - no response to PFB offer of appointment" &
            Patient_Type_Description %in% c("Inpatient", "Daycase") &
            WTS != "050"))
+
+# unavail <- unavail |>
+#   left_join(select(waits, CHI, MUI, Patient_Type, WTS), by = c("CHI", "MUI")) |>
+#   filter(!(Unavailability_Reason_Description == "Non-TTG - no response to PFB offer of appointment" &
+#              Patient_Type == "Inpatient/Day case" &
+#              WTS != "050"))
 
 #### Step 1 : Clock resets ----
 
@@ -43,8 +49,16 @@ non_attendances <- waits |>
                                                     "Did Not Attend")) |> 
   select(MUI, CHI, last_non_attendance = Non_Attendance_Date)
 
+non_attendances_max <- non_attendances |> 
+  group_by(MUI, CHI) |> 
+  filter(last_non_attendance == max(last_non_attendance)) |> 
+  ungroup()
+
 declined_pairs2 <- waits |>
   left_join(offers, by = c("MUI", "CHI")) |> 
+  left_join(non_attendances_max, by = c("MUI","CHI")) |> 
+  mutate(last_non_attendance = if_else(is.na(last_non_attendance),
+                                       dmy("01/01/1900"),last_non_attendance)) |> 
   mutate(
     rejected_reasonable = if_else(
       (`Appt/Adm_Date` - Offer_Date >= 7) & 
@@ -56,12 +70,15 @@ declined_pairs2 <- waits |>
   group_by(MUI, CHI) |> 
   mutate(
     declined_pair = if_else(rejected_reasonable == "rejected reasonable" &
-                              lag(rejected_reasonable) == "rejected reasonable" &
-                              lag(rejected_reasonable, 2, default = "start") != "rejected reasonable" &
-                              Urgency_Category != "Urgent", 1, 0)
-  ) |> 
+                              lag(rejected_reasonable, default = "not rejected reasonable") == "rejected reasonable" &
+                              !(last_non_attendance > lag(Response_Rcvd_Date) &
+                                  last_non_attendance <= Response_Rcvd_Date) &
+                              Urgency_Category != "Urgent", 1, 0)) |>
+  # mutate(declined_pair = if_else(lag(declined_pair, default = 0) == 1, 0, declined_pair)) |>
   filter(declined_pair == 1) |> 
-  filter(Response_Rcvd_Date == max(Response_Rcvd_Date)) |> 
+  mutate(remove = row_number() %% 2 == 0) |> 
+  filter(remove == FALSE) |> 
+  #filter(Response_Rcvd_Date == max(Response_Rcvd_Date)) |> 
   ungroup() |> 
   select(MUI, CHI, last_rejection = Response_Rcvd_Date)
 
@@ -88,7 +105,7 @@ resets_within_12 <- waits_all_resets |>
   left_join(unavail, by = c("MUI", "CHI")) |>
   mutate(Unavail_End_Date = case_when(
     Unavail_End_Date < prev_reset ~ NA,
-    Unavail_End_Date > reset_date ~ reset_date,
+    Unavail_End_Date > reset_date ~ reset_date-1,
     TRUE ~ Unavail_End_Date),
     Unavail_Start_Date = case_when(
       is.na(Unavail_End_Date) ~ NA,
@@ -97,10 +114,10 @@ resets_within_12 <- waits_all_resets |>
       TRUE ~ Unavail_Start_Date
     )) |>
   mutate(reset_lapse = as.numeric(Unavail_Start_Date - prev_reset),
-         Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1,
-         Number_Days_Unavailable = if_else(reset_lapse == 85,
-                                           0,
-                                           Number_Days_Unavailable)
+         Number_Days_Unavailable = as.numeric(Unavail_End_Date - Unavail_Start_Date)+1#,
+         # Number_Days_Unavailable = if_else(reset_lapse == 85,
+         #                                   0,
+         #                                   Number_Days_Unavailable)
          ) |>
   group_by(MUI, CHI, reset_date) |>
   arrange(Unavail_Start_Date) |>

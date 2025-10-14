@@ -32,8 +32,9 @@ waits_init <- read_csv(paste0(csv_folder, "Ongoing waits.csv"),
                                      "Effective_Start_Date",
                                      "Number_of_waiting_list_days",
                                      "Urgency_Category",
-                                     "Wait_Calculation_Used"),
-                       col_types = "ccccccccccccc") |> 
+                                     "Wait_Calculation_Used",
+                                     "WTS"),
+                       col_types = "cccccccccccccc") |> 
   select(-c("Ongoing/Completed", "Number Seen/On list")) |> 
   mutate(Urgency_Category = case_when(
     Urgency_Category %in% c("Routine",

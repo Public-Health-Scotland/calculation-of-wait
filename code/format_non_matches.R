@@ -68,5 +68,5 @@ chis <- all |>
 
 #### Step 5 : Save out
 
-write_csv(all, "temp/comp_25_months/check4.csv")
-write_csv(chis, "temp/comp_25_months/notes4.csv")
+write_csv(all, "temp/comp_25_months/check_overnight.csv")
+write_csv(chis, "temp/comp_25_months/notes_overnight.csv")
