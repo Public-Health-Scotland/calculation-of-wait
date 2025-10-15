@@ -28,18 +28,21 @@ waits <- read_rds(paste0("output/", run_name,
                          "/waits.rds")) |> 
   rename(length_warehouse = Number_of_waiting_list_days)
 
-ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
-nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")
-
-groupings <- ipdc_groupings |> 
-  full_join(nop_groupings, by = "Specialty") |> 
-  mutate(grouped_specialty.x = if_else(is.na(grouped_specialty.x),
-                                       grouped_specialty.y,
-                                       grouped_specialty.x)) |> 
-  select(Specialty, grouped_specialty = grouped_specialty.x)
+# ipdc_groupings <- read.xlsx("spec_groupings/IPDC.xlsx")
+# nop_groupings <- read.xlsx("spec_groupings/NOP.xlsx")
+# 
+# groupings <- ipdc_groupings |> 
+#   full_join(nop_groupings, by = "Specialty") |> 
+#   mutate(grouped_specialty.x = if_else(is.na(grouped_specialty.x),
+#                                        grouped_specialty.y,
+#                                        grouped_specialty.x)) |> 
+#   select(Specialty, grouped_specialty = grouped_specialty.x)
+# 
+# waits <- waits |> 
+#   left_join(groupings, by = "Specialty")
 
 waits <- waits |> 
-  left_join(groupings, by = "Specialty")
+  rename(grouped_specialty = Specialty)
 
 
 perform_analysis <- function(ptype, w_length) {
