@@ -15,14 +15,14 @@ library(dplyr)
 #### Edit Filepaths ----
 
 # in 
-csv_folder <- "MUIs/WT guidance review completed waits apr - sep/"
+csv_folder <- "MUIs/WTs guidance review ongoing waits snapshot - oct/"
 
 # out
-run_name <- "comp_apr_sep"
+run_name <- "ongo_oct_nov_snap"
 
 #### Implement Rules ----
-# source("code/imports/import_csvs.R")
-source("code/imports/import_completed_csvs.R")
+source("code/imports/import_csvs.R")
+# source("code/imports/import_completed_csvs.R")
 
 ###
 # non_matching_chis <- read_csv("temp/comp_25_months/non_matching_chis.csv") |>
@@ -59,10 +59,10 @@ source("code/wait_calculation/all_old_rules.R")
 ###
 
 # Implement each rule change separately
-source("code/wait_calculation/reasonable_offer.R")
-source("code/wait_calculation/unavail_beyond_12.R")
-source("code/wait_calculation/resets_beyond_12.R")
-source("code/wait_calculation/no_urgency.R")
+# source("code/wait_calculation/reasonable_offer.R")
+# source("code/wait_calculation/unavail_beyond_12.R")
+# source("code/wait_calculation/resets_beyond_12.R")
+# source("code/wait_calculation/no_urgency.R")
 
 # Implement all new rule changes at once
 #source("code/wait_calculation/all_new_rules.R")
@@ -70,11 +70,11 @@ source("code/wait_calculation/no_urgency.R")
 #### Save data ----
 
 waits_final <- waits_init |> 
-  left_join(all_old_rules, by = c("MUI","CHI")) |> 
-  left_join(reasonable_offer, by = c("MUI","CHI")) |> 
-  left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
-  left_join(no_urgency, by = c("MUI","CHI")) |> 
-  left_join(resets_beyond_12, by = c("MUI","CHI")) #|> 
+  left_join(all_old_rules, by = c("MUI","CHI")) #|> 
+  # left_join(reasonable_offer, by = c("MUI","CHI")) |> 
+  # left_join(unavail_beyond_12, by = c("MUI","CHI")) |> 
+  # left_join(no_urgency, by = c("MUI","CHI")) |> 
+  # left_join(resets_beyond_12, by = c("MUI","CHI")) #|> 
   # left_join(all_new_rules, by = c("MUI","CHI"))
 
 # Filter out any records whose wait can't be replicated 
@@ -110,15 +110,15 @@ waits_final <- waits_final |>
   mutate(Number_of_waiting_list_days = if_else(Patient_Type == "Inpatient/Day case" &
                                                  WTS == "023", 0, Number_of_waiting_list_days),
          length_all_old_rules = if_else(Patient_Type == "Inpatient/Day case" &
-                                          WTS == "023", 0, length_all_old_rules),
-         length_no_urgency = if_else(Patient_Type == "Inpatient/Day case" &
-                                          WTS == "023", 0, length_no_urgency),
-         length_reasonable_offer = if_else(Patient_Type == "Inpatient/Day case" &
-                                             WTS == "023", 0, length_reasonable_offer),
-         length_unavail_beyond_12 = if_else(Patient_Type == "Inpatient/Day case" &
-                                              WTS == "023", 0, length_unavail_beyond_12),
-         length_resets_beyond_12 = if_else(Patient_Type == "Inpatient/Day case" &
-                                             WTS == "023", 0, length_resets_beyond_12))
+                                          WTS == "023", 0, length_all_old_rules))#,
+         # length_no_urgency = if_else(Patient_Type == "Inpatient/Day case" &
+         #                                  WTS == "023", 0, length_no_urgency),
+         # length_reasonable_offer = if_else(Patient_Type == "Inpatient/Day case" &
+         #                                     WTS == "023", 0, length_reasonable_offer),
+         # length_unavail_beyond_12 = if_else(Patient_Type == "Inpatient/Day case" &
+         #                                      WTS == "023", 0, length_unavail_beyond_12),
+         # length_resets_beyond_12 = if_else(Patient_Type == "Inpatient/Day case" &
+         #                                     WTS == "023", 0, length_resets_beyond_12))
 
 dir.create(paste0("temp/", run_name))
 dir.create(paste0("output/", run_name))
